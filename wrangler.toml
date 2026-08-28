@@ -2,7 +2,14 @@ name = "cepatkaya"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
+[assets]
+directory = "./dist/client"
+
 [[d1_databases]]
 binding = "DB"
 database_name = "cepatkaya-db"
 database_id = "c13d2eb6-1884-47b9-ac8b-28becad03451"
+
+[[kv_namespaces]]
+binding = "SESSION"
+id = "3fb84ff71d5742d88c024045fb241731"
