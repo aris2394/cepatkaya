@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, Show } from 'solid-js';
 import type { Category } from '../types';
 
 interface ExpenseLoggerProps {
@@ -16,6 +16,7 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
   const [note, setNote] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal('');
+  const [success, setSuccess] = createSignal(false);
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -23,10 +24,8 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
       setError('Please select a category and enter a valid amount');
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
       const res = await fetch('/api/expenses', {
         method: 'POST',
@@ -38,15 +37,16 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
           note: note(),
         }),
       });
+      if (!res.ok) throw new Error('Failed to record expense');
 
-      if (!res.ok) {
-        throw new Error('Failed to record expense');
-      }
-
-      setAmount('');
-      setNote('');
-      props.onSuccess();
-      props.onClose();
+      setSuccess(true);
+      setTimeout(() => {
+        setAmount('');
+        setNote('');
+        setSuccess(false);
+        props.onSuccess();
+        props.onClose();
+      }, 600);
     } catch (err: any) {
       setError(err.message || 'Something went wrong');
     } finally {
@@ -54,110 +54,127 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
     }
   };
 
-  return (
-    <>
-      {props.isOpen && (
-        <div class="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-slate-900/50 backdrop-blur-xs">
-          <div class="bg-white rounded-t-3xl sm:rounded-2xl w-full max-w-sm p-6 shadow-2xl animate-in slide-in-from-bottom sm:zoom-in-95 duration-200">
-            <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-              <div>
-                <h3 class="text-lg font-bold text-slate-800">Log Daily Expense</h3>
-                <p class="text-xs text-slate-400">Quick track your actual spending</p>
-              </div>
-              <button
-                type="button"
-                onClick={props.onClose}
-                class="text-slate-400 hover:text-slate-600 rounded-lg p-1"
-              >
-                ✕
-              </button>
-            </div>
+  const inputClass = "w-full px-4 py-3 bg-white/5 border border-white/8 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/8 focus:border-indigo-500/30 transition-all placeholder:text-white/25 text-sm";
+  const labelClass = "block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5";
 
-            <form onSubmit={handleSubmit} class="mt-4 space-y-3.5">
+  return (
+    <Show when={props.isOpen}>
+      {/* Backdrop */}
+      <div
+        class="fixed inset-0 z-50 flex items-end justify-center animate-backdrop-in"
+        style="background: rgba(0,0,0,0.7); backdrop-filter: blur(8px);"
+        onClick={(e) => e.target === e.currentTarget && props.onClose()}
+      >
+        {/* Sheet */}
+        <div class="bg-[#161921] border border-white/8 rounded-t-[2rem] w-full max-w-md p-6 pb-8 shadow-2xl animate-sheet-in">
+          {/* Handle */}
+          <div class="w-10 h-1 bg-white/15 rounded-full mx-auto mb-5" />
+
+          <div class="flex items-center justify-between mb-5">
+            <div>
+              <h3 class="text-lg font-black text-white">Log Expense</h3>
+              <p class="text-xs text-white/35 mt-0.5">Track your daily spending</p>
+            </div>
+            <button
+              type="button"
+              onClick={props.onClose}
+              class="w-8 h-8 flex items-center justify-center rounded-xl bg-white/5 text-white/40 hover:text-white hover:bg-white/10 transition-all text-sm"
+            >
+              ✕
+            </button>
+          </div>
+
+          <Show when={success()}>
+            <div class="flex flex-col items-center justify-center py-8 animate-scale-in">
+              <div class="text-5xl mb-3">✅</div>
+              <p class="text-white font-bold">Expense recorded!</p>
+            </div>
+          </Show>
+
+          <Show when={!success()}>
+            <form onSubmit={handleSubmit} class="space-y-4">
               <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                  Category
-                </label>
+                <label class={labelClass}>Category</label>
                 <select
                   value={categoryId()}
                   onChange={(e) => setCategoryId(e.currentTarget.value)}
-                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition"
+                  class={inputClass}
                   required
                 >
-                  <option value="" disabled>Select category</option>
+                  <option value="" disabled style="background:#161921">Select category</option>
                   {props.categories.map((cat) => (
-                    <option value={cat.id}>{cat.name}</option>
+                    <option value={cat.id} style="background:#161921">{cat.name}</option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                  Amount (IDR)
-                </label>
+                <label class={labelClass}>Amount (IDR)</label>
                 <input
                   type="number"
-                  placeholder="e.g. 50000"
+                  placeholder="e.g. 50,000"
                   value={amount()}
                   onInput={(e) => setAmount(e.currentTarget.value)}
-                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition"
+                  class={inputClass}
                   min="0"
                   required
                 />
               </div>
 
-              <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                  Date
-                </label>
-                <input
-                  type="date"
-                  value={date()}
-                  onInput={(e) => setDate(e.currentTarget.value)}
-                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 font-semibold focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition"
-                  required
-                />
-              </div>
-
-              <div>
-                <label class="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1">
-                  Note / Description
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. Lunch with team, Groceries"
-                  value={note()}
-                  onInput={(e) => setNote(e.currentTarget.value)}
-                  class="w-full px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-slate-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-600 focus:bg-white transition"
-                />
-              </div>
-
-              {error() && (
-                <div class="text-xs font-medium text-rose-500 bg-rose-50 p-2.5 rounded-lg">
-                  {error()}
+              <div class="grid grid-cols-2 gap-3">
+                <div>
+                  <label class={labelClass}>Date</label>
+                  <input
+                    type="date"
+                    value={date()}
+                    onInput={(e) => setDate(e.currentTarget.value)}
+                    class={inputClass}
+                    required
+                  />
                 </div>
-              )}
+                <div>
+                  <label class={labelClass}>Note (optional)</label>
+                  <input
+                    type="text"
+                    placeholder="Lunch, Groceries..."
+                    value={note()}
+                    onInput={(e) => setNote(e.currentTarget.value)}
+                    class={inputClass}
+                  />
+                </div>
+              </div>
 
-              <div class="flex gap-2 pt-2">
+              <Show when={error()}>
+                <div class="text-xs font-semibold text-rose-400 bg-rose-500/10 border border-rose-500/20 p-3 rounded-xl animate-scale-in">
+                  ⚠️ {error()}
+                </div>
+              </Show>
+
+              <div class="flex gap-3 pt-1">
                 <button
                   type="button"
                   onClick={props.onClose}
-                  class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-sm font-semibold text-slate-600 hover:bg-slate-50 transition"
+                  class="flex-1 py-3.5 rounded-2xl bg-white/5 border border-white/8 text-sm font-bold text-white/60 hover:bg-white/10 hover:text-white transition-all active:scale-95"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading() || props.categories.length === 0}
-                  class="flex-1 px-4 py-2.5 rounded-xl bg-blue-600 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-50 shadow-md shadow-blue-500/20 transition"
+                  class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-600 text-sm font-black text-white shadow-lg shadow-indigo-500/30 hover:from-indigo-400 hover:to-violet-500 disabled:opacity-40 transition-all active:scale-95"
                 >
-                  {loading() ? 'Saving...' : 'Add Expense'}
+                  {loading() ? (
+                    <span class="flex items-center justify-center gap-2">
+                      <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full inline-block" style="animation: spin 0.6s linear infinite" />
+                      Saving...
+                    </span>
+                  ) : 'Add Expense'}
                 </button>
               </div>
             </form>
-          </div>
+          </Show>
         </div>
-      )}
-    </>
+      </div>
+    </Show>
   );
 };
