@@ -5,4 +5,4 @@ compatibility_flags = ["nodejs_compat"]
 [[d1_databases]]
 binding = "DB"
 database_name = "cepatkaya-db"
-database_id = "local-cepatkaya-db"
+database_id = "c13d2eb6-1884-47b9-ac8b-28becad03451"
