@@ -25,7 +25,6 @@ export const Dashboard = () => {
   const [isIncomeModalOpen, setIsIncomeModalOpen] = createSignal(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = createSignal(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = createSignal(false);
-  const [isExpenseModalOpen, setIsExpenseModalOpen] = createSignal(false);
   const [deletingId, setDeletingId] = createSignal<number | null>(null);
   const [editingCategory, setEditingCategory] = createSignal<any>(null);
   const [editingExpense, setEditingExpense] = createSignal<any>(null);
