@@ -288,7 +288,7 @@ export const Dashboard = () => {
                             ? `Exceeded ${formatIDR(Math.abs(cat.remaining))}`
                             : `${formatIDR(cat.remaining)} left`}
                         </span>
-                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div class="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => { setEditingCategory(cat); setIsCategoryModalOpen(true); }}
                             class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all text-sm"
@@ -373,7 +373,7 @@ export const Dashboard = () => {
                     </div>
                     <div class="flex items-center gap-2">
                       <span class="font-black text-sm text-rose-400">-{formatIDR(exp.amount)}</span>
-                      <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                      <div class="flex items-center opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity gap-1">
                         <button
                           onClick={() => { setEditingExpense(exp); setIsExpenseModalOpen(true); }}
                           class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all text-sm"
