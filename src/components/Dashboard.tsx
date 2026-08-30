@@ -33,6 +33,52 @@ export const Dashboard = () => {
   const [editingCategory, setEditingCategory] = createSignal<any>(null);
   const [editingExpense, setEditingExpense] = createSignal<any>(null);
 
+  // Collapsible sections state
+  const [isCategoriesCollapsed, setIsCategoriesCollapsed] = createSignal(
+    typeof window !== 'undefined' ? localStorage.getItem('ck_cat_collapsed') === 'true' : false
+  );
+  const [isExpensesCollapsed, setIsExpensesCollapsed] = createSignal(
+    typeof window !== 'undefined' ? localStorage.getItem('ck_exp_collapsed') === 'true' : false
+  );
+
+  const toggleCategoriesCollapse = () => {
+    const next = !isCategoriesCollapsed();
+    setIsCategoriesCollapsed(next);
+    if (typeof window !== 'undefined') localStorage.setItem('ck_cat_collapsed', String(next));
+  };
+
+  const toggleExpensesCollapse = () => {
+    const next = !isExpensesCollapsed();
+    setIsExpensesCollapsed(next);
+    if (typeof window !== 'undefined') localStorage.setItem('ck_exp_collapsed', String(next));
+  };
+
+  // Theme state switcher (Dark / Light mode)
+  const [theme, setTheme] = createSignal(
+    typeof window !== 'undefined' ? localStorage.getItem('ck_theme') || 'dark' : 'dark'
+  );
+
+  const applyThemeClass = (mode: string) => {
+    if (typeof document !== 'undefined') {
+      if (mode === 'light') {
+        document.documentElement.classList.add('light-mode');
+      } else {
+        document.documentElement.classList.remove('light-mode');
+      }
+    }
+  };
+
+  applyThemeClass(theme());
+
+  const toggleTheme = () => {
+    const next = theme() === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('ck_theme', next);
+    }
+    applyThemeClass(next);
+  };
+
   const handleCloseCategoryModal = () => {
     setIsCategoryModalOpen(false);
     setTimeout(() => setEditingCategory(null), 300);
@@ -113,7 +159,7 @@ export const Dashboard = () => {
   };
 
   const handleLoadPresets = async () => {
-    if (!confirm('Load the 12 default preset categories for this month?')) return;
+    if (!confirm('Load default preset categories for this month?')) return;
     setLoadingPresets(true);
     try {
       const res = await fetch('/api/categories/presets', {
@@ -151,8 +197,28 @@ export const Dashboard = () => {
     return Math.max(0, ((d.total_income - d.total_spent) / d.total_income) * 100);
   };
 
+  const netCashflow = () => {
+    const d = data();
+    if (!d) return 0;
+    return d.total_income - d.total_spent;
+  };
+
+  const topSpendingCat = () => {
+    const cats = data()?.categories || [];
+    if (cats.length === 0) return null;
+    return [...cats].sort((a, b) => b.spent - a.spent)[0];
+  };
+
+  const healthStatus = () => {
+    const d = data();
+    if (!d || d.total_allocated === 0) return { label: 'Siap Diatur ⚪', color: 'text-white/60 bg-white/5 border-white/10' };
+    if (d.total_spent > d.total_allocated) return { label: 'Over Budget 🔴', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' };
+    if (d.total_spent >= 0.8 * d.total_allocated) return { label: 'Waspada 🟡', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
+    return { label: 'Sehat 🟢', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
+  };
+
   return (
-    <div class="max-w-md mx-auto min-h-screen bg-[#0f1117] pb-28 relative overflow-x-hidden">
+    <div class="max-w-md mx-auto min-h-screen bg-[#0f1117] pb-28 relative overflow-x-hidden transition-colors duration-300">
       {/* Background ambient glow */}
       <div class="fixed inset-0 pointer-events-none overflow-hidden">
         <div class="absolute -top-40 -left-20 w-72 h-72 bg-rose-600/10 rounded-full blur-3xl" />
@@ -171,6 +237,13 @@ export const Dashboard = () => {
             </div>
           </div>
           <div class="flex items-center gap-2">
+            <button
+              onClick={toggleTheme}
+              title={theme() === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+              class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-white/70 hover:text-white hover:bg-white/10 border border-white/5 transition-all active:scale-95 text-sm"
+            >
+              {theme() === 'dark' ? '☀️' : '🌙'}
+            </button>
             <button
               onClick={() => setIsUserManagerOpen(true)}
               title="Kelola Akun Admin"
@@ -248,10 +321,15 @@ export const Dashboard = () => {
               <p class="text-[11px] text-white/40">{selectedMonth()}</p>
             </div>
             <Show when={!loading() && data()}>
-              <div class="text-right">
-                <div class="text-[10px] text-white/40 uppercase tracking-wider">Savings Rate</div>
-                <div class={`text-sm font-black ${savingsRate() > 20 ? 'text-emerald-400' : 'text-amber-400'}`}>
-                  {savingsRate().toFixed(0)}%
+              <div class="flex items-center gap-2">
+                <span class={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${healthStatus().color}`}>
+                  {healthStatus().label}
+                </span>
+                <div class="text-right">
+                  <div class="text-[10px] text-white/40 uppercase tracking-wider">Savings Rate</div>
+                  <div class={`text-sm font-black ${savingsRate() > 20 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                    {savingsRate().toFixed(0)}%
+                  </div>
                 </div>
               </div>
             </Show>
@@ -281,9 +359,27 @@ export const Dashboard = () => {
             </div>
           </Show>
 
+          {/* Financial Cashflow Summary Grid */}
+          <Show when={!loading() && data()}>
+            <div class="mt-4 pt-4 border-t border-white/8 grid grid-cols-2 gap-3">
+              <div class="p-3 rounded-2xl bg-white/3 border border-white/5">
+                <span class="text-[10px] font-semibold text-white/35 uppercase tracking-wider block mb-1">Net Cashflow</span>
+                <span class={`text-sm font-extrabold ${netCashflow() >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {netCashflow() >= 0 ? '+' : ''}{formatIDR(netCashflow())}
+                </span>
+              </div>
+              <div class="p-3 rounded-2xl bg-white/3 border border-white/5">
+                <span class="text-[10px] font-semibold text-white/35 uppercase tracking-wider block mb-1">Pengeluaran Terbesar</span>
+                <span class="text-xs font-bold text-white truncate block">
+                  {topSpendingCat() ? `${topSpendingCat()?.name}` : 'Belum Ada'}
+                </span>
+              </div>
+            </div>
+          </Show>
+
           {/* Unallocated warning */}
           <Show when={!loading() && data() && data()!.remaining_unallocated > 0}>
-            <div class="mt-4 p-3 rounded-2xl bg-amber-500/8 border border-amber-500/15 flex items-center justify-between animate-fade-up">
+            <div class="mt-3 p-3 rounded-2xl bg-amber-500/8 border border-amber-500/15 flex items-center justify-between animate-fade-up">
               <div class="flex items-center gap-2 text-xs text-amber-400">
                 <span class="text-base">⚠️</span>
                 <span>Unallocated: <b>{formatIDR(data()!.remaining_unallocated)}</b></span>
@@ -320,113 +416,223 @@ export const Dashboard = () => {
           </Show>
         </div>
 
-        {/* Categories Card */}
+        {/* Categories Card (Collapsible) */}
         <div class="glass-card rounded-3xl p-5 animate-fade-up card-lift" style="animation-delay:0.18s; opacity:0">
           <div class="flex items-center justify-between mb-4">
             <div>
               <h2 class="text-sm font-bold text-white">Category Budgets</h2>
               <p class="text-[11px] text-white/35">Real-time spending limits</p>
             </div>
-            <button
-              onClick={() => setIsCategoryModalOpen(true)}
-              class="flex items-center gap-1 px-3 py-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-xl text-xs font-bold border border-rose-500/20 transition-all active:scale-95"
-            >
-              <span class="text-sm leading-none">+</span> Add
-            </button>
-          </div>
-
-          <div class="flex items-center gap-2 mb-4 flex-wrap">
-            <button
-              onClick={handleRollover}
-              disabled={rolling()}
-              class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95 disabled:opacity-40"
-            >
-              {rolling() ? 'Copying…' : '↻ Copy last month'}
-            </button>
-            <button
-              onClick={handleLoadPresets}
-              disabled={loadingPresets()}
-              class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95 disabled:opacity-40"
-            >
-              {loadingPresets() ? 'Loading…' : '✨ Load presets'}
-            </button>
-            <button
-              onClick={() => setIsTemplateManagerOpen(true)}
-              class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95"
-            >
-              📋 Templates
-            </button>
-          </div>
-
-          <Show when={loading()}>
-            <div class="space-y-4">
-              {[1, 2, 3].map(() => (
-                <div class="space-y-2">
-                  <div class="shimmer h-4 w-28 rounded-full" />
-                  <div class="shimmer h-2 w-full rounded-full" />
-                </div>
-              ))}
+            <div class="flex items-center gap-2">
+              <button
+                onClick={toggleCategoriesCollapse}
+                class="px-2.5 py-1 text-[11px] font-bold text-white/50 hover:text-white bg-white/5 rounded-lg border border-white/5 transition active:scale-95"
+              >
+                {isCategoriesCollapsed() ? '▼ Tampilkan' : '▲ Sembunyikan'}
+              </button>
+              <button
+                onClick={() => setIsCategoryModalOpen(true)}
+                class="flex items-center gap-1 px-3 py-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-xl text-xs font-bold border border-rose-500/20 transition-all active:scale-95"
+              >
+                <span class="text-sm leading-none">+</span> Add
+              </button>
             </div>
-          </Show>
+          </div>
 
-          <Show
-            when={!loading() && data() && data()!.categories.length > 0}
-            fallback={
-              <Show when={!loading()}>
-                <div class="text-center py-8">
-                  <div class="text-3xl mb-2">📂</div>
-                  <p class="text-white/30 text-xs">No budget categories yet</p>
-                  <div class="flex flex-col items-center gap-2 mt-3">
-                    <button
-                      onClick={() => setIsCategoryModalOpen(true)}
-                      class="px-4 py-2 bg-rose-500/10 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 hover:bg-rose-500/20 transition"
-                    >
-                      Create your first category
-                    </button>
-                    <button
-                      onClick={handleLoadPresets}
-                      disabled={loadingPresets()}
-                      class="px-4 py-2 bg-white/5 text-white/60 rounded-xl text-xs font-bold border border-white/5 hover:bg-white/10 transition disabled:opacity-40"
-                    >
-                      {loadingPresets() ? 'Loading…' : '✨ Load 12 presets'}
-                    </button>
-                    <button
-                      onClick={() => setIsTemplateManagerOpen(true)}
-                      class="px-4 py-2 bg-white/5 text-white/60 rounded-xl text-xs font-bold border border-white/5 hover:bg-white/10 transition"
-                    >
-                      📋 Manage templates
-                    </button>
+          <Show when={!isCategoriesCollapsed()}>
+            <div class="flex items-center gap-2 mb-4 flex-wrap">
+              <button
+                onClick={handleRollover}
+                disabled={rolling()}
+                class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95 disabled:opacity-40"
+              >
+                {rolling() ? 'Copying…' : '↻ Copy last month'}
+              </button>
+              <button
+                onClick={handleLoadPresets}
+                disabled={loadingPresets()}
+                class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95 disabled:opacity-40"
+              >
+                {loadingPresets() ? 'Loading…' : '✨ Load presets'}
+              </button>
+              <button
+                onClick={() => setIsTemplateManagerOpen(true)}
+                class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95"
+              >
+                📋 Templates
+              </button>
+            </div>
+
+            <Show when={loading()}>
+              <div class="space-y-4">
+                {[1, 2, 3].map(() => (
+                  <div class="space-y-2">
+                    <div class="shimmer h-4 w-28 rounded-full" />
+                    <div class="shimmer h-2 w-full rounded-full" />
                   </div>
-                </div>
-              </Show>
-            }
-          >
-            <div class="space-y-4">
-              <For each={data()?.categories}>
-                {(cat, i) => (
-                  <div
-                    class="group p-4 rounded-2xl bg-white/3 border border-white/5 space-y-2.5 hover:bg-white/5 transition-all animate-fade-up"
-                    style={`animation-delay:${0.2 + i() * 0.06}s; opacity:0`}
-                  >
-                    <div class="flex items-center justify-between gap-2">
-                      <span class="font-bold text-white text-sm truncate flex-1">{cat.name}</span>
-                      <div class="flex items-center gap-2 shrink-0">
-                        <span class={`text-xs font-bold whitespace-nowrap ${cat.remaining < 0 ? 'text-rose-400' : 'text-white/50'}`}>
-                          {cat.remaining < 0
-                            ? `Exceeded ${formatIDR(Math.abs(cat.remaining))}`
-                            : `${formatIDR(cat.remaining)} left`}
-                        </span>
-                        <div class="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                ))}
+              </div>
+            </Show>
+
+            <Show
+              when={!loading() && data() && data()!.categories.length > 0}
+              fallback={
+                <Show when={!loading()}>
+                  <div class="text-center py-8">
+                    <div class="text-3xl mb-2">📂</div>
+                    <p class="text-white/30 text-xs">No budget categories yet</p>
+                    <div class="flex flex-col items-center gap-2 mt-3">
+                      <button
+                        onClick={() => setIsCategoryModalOpen(true)}
+                        class="px-4 py-2 bg-rose-500/10 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 hover:bg-rose-500/20 transition"
+                      >
+                        Create your first category
+                      </button>
+                      <button
+                        onClick={handleLoadPresets}
+                        disabled={loadingPresets()}
+                        class="px-4 py-2 bg-white/5 text-white/60 rounded-xl text-xs font-bold border border-white/5 hover:bg-white/10 transition disabled:opacity-40"
+                      >
+                        {loadingPresets() ? 'Loading…' : '✨ Load presets'}
+                      </button>
+                      <button
+                        onClick={() => setIsTemplateManagerOpen(true)}
+                        class="px-4 py-2 bg-white/5 text-white/60 rounded-xl text-xs font-bold border border-white/5 hover:bg-white/10 transition"
+                      >
+                        📋 Manage templates
+                      </button>
+                    </div>
+                  </div>
+                </Show>
+              }
+            >
+              <div class="space-y-4">
+                <For each={data()?.categories}>
+                  {(cat, i) => (
+                    <div
+                      class="group p-4 rounded-2xl bg-white/3 border border-white/5 space-y-2.5 hover:bg-white/5 transition-all animate-fade-up"
+                      style={`animation-delay:${0.2 + i() * 0.06}s; opacity:0`}
+                    >
+                      <div class="flex items-center justify-between gap-2">
+                        <span class="font-bold text-white text-sm truncate flex-1">{cat.name}</span>
+                        <div class="flex items-center gap-2 shrink-0">
+                          <span class={`text-xs font-bold whitespace-nowrap ${cat.remaining < 0 ? 'text-rose-400' : 'text-white/50'}`}>
+                            {cat.remaining < 0
+                              ? `Exceeded ${formatIDR(Math.abs(cat.remaining))}`
+                              : `${formatIDR(cat.remaining)} left`}
+                          </span>
+                          <div class="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                            <button
+                              onClick={() => { setEditingCategory(cat); setIsCategoryModalOpen(true); }}
+                              class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                              title="Edit"
+                            >
+                              ✏️
+                            </button>
+                            <button
+                              onClick={() => handleDeleteCategory(cat.id!)}
+                              class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                              title="Delete"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                      <BudgetGauge percentage={cat.percentage} spent={cat.spent} total={cat.allocated_budget} />
+                    </div>
+                  )}
+                </For>
+              </div>
+            </Show>
+          </Show>
+        </div>
+
+        {/* Recent Expenses Card (Collapsible) */}
+        <div class="glass-card rounded-3xl p-5 animate-fade-up card-lift" style="animation-delay:0.26s; opacity:0">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-sm font-bold text-white">Recent Expenses</h2>
+              <p class="text-[11px] text-white/35">Latest transactions</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button
+                onClick={toggleExpensesCollapse}
+                class="px-2.5 py-1 text-[11px] font-bold text-white/50 hover:text-white bg-white/5 rounded-lg border border-white/5 transition active:scale-95"
+              >
+                {isExpensesCollapsed() ? '▼ Tampilkan' : '▲ Sembunyikan'}
+              </button>
+              <span class="px-2.5 py-1 bg-white/5 text-white/40 rounded-lg text-[10px] font-semibold border border-white/5">
+                {data()?.recent_expenses?.length || 0} records
+              </span>
+            </div>
+          </div>
+
+          <Show when={!isExpensesCollapsed()}>
+            <Show when={loading()}>
+              <div class="space-y-3">
+                {[1, 2, 3, 4].map(() => (
+                  <div class="flex items-center justify-between py-2">
+                    <div class="space-y-1.5">
+                      <div class="shimmer h-3.5 w-24 rounded-full" />
+                      <div class="shimmer h-2.5 w-16 rounded-full" />
+                    </div>
+                    <div class="shimmer h-4 w-20 rounded-full" />
+                  </div>
+                ))}
+              </div>
+            </Show>
+
+            <Show
+              when={!loading() && data() && data()!.recent_expenses.length > 0}
+              fallback={
+                <Show when={!loading()}>
+                  <div class="text-center py-8">
+                    <div class="text-3xl mb-2">💸</div>
+                    <p class="text-white/30 text-xs">No expenses logged yet</p>
+                  </div>
+                </Show>
+              }
+            >
+              <div class="divide-y divide-white/4">
+                <For each={data()?.recent_expenses}>
+                  {(exp, i) => (
+                    <div
+                      class={`py-3.5 flex items-center justify-between gap-2 group animate-fade-up transition-opacity ${deletingId() === exp.id ? 'opacity-30' : ''}`}
+                      style={`animation-delay:${0.28 + i() * 0.04}s; opacity:0`}
+                    >
+                      <div class="flex items-center gap-3 flex-1 min-w-0">
+                        {/* Category icon */}
+                        <div class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/15 flex items-center justify-center text-base flex-shrink-0">
+                          💳
+                        </div>
+                        <div class="min-w-0 flex-1">
+                          <div class="font-semibold text-white text-sm leading-tight truncate">{exp.category_name}</div>
+                          <div class="text-[11px] text-white/35 mt-1 flex items-center gap-1.5 flex-wrap">
+                            <span class="whitespace-nowrap">{exp.date}</span>
+                            {exp.created_by_name && (
+                              <>
+                                <span class="text-white/20 shrink-0">•</span>
+                                <span class="text-[10px] font-semibold text-rose-300/80 bg-rose-500/10 px-1.5 py-0.5 rounded-md">by {exp.created_by_name}</span>
+                              </>
+                            )}
+                            {exp.note && <><span class="text-white/20 shrink-0">•</span><span class="truncate">{exp.note}</span></>}
+                          </div>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-1.5 shrink-0">
+                        <span class="font-black text-sm text-rose-400 whitespace-nowrap">-{formatIDR(exp.amount)}</span>
+                        <div class="flex items-center opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity gap-1">
                           <button
-                            onClick={() => { setEditingCategory(cat); setIsCategoryModalOpen(true); }}
-                            class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                            onClick={() => { setEditingExpense(exp); setIsExpenseModalOpen(true); }}
+                            class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
                             title="Edit"
                           >
                             ✏️
                           </button>
                           <button
-                            onClick={() => handleDeleteCategory(cat.id!)}
-                            class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                            onClick={() => handleDeleteExpense(exp.id!)}
+                            class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
                             title="Delete"
                           >
                             🗑️
@@ -434,100 +640,10 @@ export const Dashboard = () => {
                         </div>
                       </div>
                     </div>
-                    <BudgetGauge percentage={cat.percentage} spent={cat.spent} total={cat.allocated_budget} />
-                  </div>
-                )}
-              </For>
-            </div>
-          </Show>
-        </div>
-
-        {/* Recent Expenses Card */}
-        <div class="glass-card rounded-3xl p-5 animate-fade-up card-lift" style="animation-delay:0.26s; opacity:0">
-          <div class="flex items-center justify-between mb-4">
-            <div>
-              <h2 class="text-sm font-bold text-white">Recent Expenses</h2>
-              <p class="text-[11px] text-white/35">Latest transactions</p>
-            </div>
-            <span class="px-2.5 py-1 bg-white/5 text-white/40 rounded-lg text-[10px] font-semibold border border-white/5">
-              {data()?.recent_expenses?.length || 0} records
-            </span>
-          </div>
-
-          <Show when={loading()}>
-            <div class="space-y-3">
-              {[1, 2, 3, 4].map(() => (
-                <div class="flex items-center justify-between py-2">
-                  <div class="space-y-1.5">
-                    <div class="shimmer h-3.5 w-24 rounded-full" />
-                    <div class="shimmer h-2.5 w-16 rounded-full" />
-                  </div>
-                  <div class="shimmer h-4 w-20 rounded-full" />
-                </div>
-              ))}
-            </div>
-          </Show>
-
-          <Show
-            when={!loading() && data() && data()!.recent_expenses.length > 0}
-            fallback={
-              <Show when={!loading()}>
-                <div class="text-center py-8">
-                  <div class="text-3xl mb-2">💸</div>
-                  <p class="text-white/30 text-xs">No expenses logged yet</p>
-                </div>
-              </Show>
-            }
-          >
-            <div class="divide-y divide-white/4">
-              <For each={data()?.recent_expenses}>
-                {(exp, i) => (
-                  <div
-                    class={`py-3.5 flex items-center justify-between gap-2 group animate-fade-up transition-opacity ${deletingId() === exp.id ? 'opacity-30' : ''}`}
-                    style={`animation-delay:${0.28 + i() * 0.04}s; opacity:0`}
-                  >
-                    <div class="flex items-center gap-3 flex-1 min-w-0">
-                      {/* Category icon */}
-                      <div class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/15 flex items-center justify-center text-base flex-shrink-0">
-                        💳
-                      </div>
-                      <div class="min-w-0 flex-1">
-                        <div class="font-semibold text-white text-sm leading-tight truncate">{exp.category_name}</div>
-                        <div class="text-[11px] text-white/35 mt-1 flex items-center gap-1.5 flex-wrap">
-                          <span class="whitespace-nowrap">{exp.date}</span>
-                          {exp.created_by_name && (
-                            <>
-                              <span class="text-white/20 shrink-0">•</span>
-                              <span class="text-[10px] font-semibold text-rose-300/80 bg-rose-500/10 px-1.5 py-0.5 rounded-md">by {exp.created_by_name}</span>
-                            </>
-                          )}
-                          {exp.note && <><span class="text-white/20 shrink-0">•</span><span class="truncate">{exp.note}</span></>}
-                        </div>
-                      </div>
-                    </div>
-                    <div class="flex items-center gap-1.5 shrink-0">
-                      <span class="font-black text-sm text-rose-400 whitespace-nowrap">-{formatIDR(exp.amount)}</span>
-                      <div class="flex items-center opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity gap-1">
-                        <button
-                          onClick={() => { setEditingExpense(exp); setIsExpenseModalOpen(true); }}
-                          class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
-                          title="Edit"
-                        >
-                          ✏️
-                        </button>
-                        <button
-                          onClick={() => handleDeleteExpense(exp.id!)}
-                          class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
-                          title="Delete"
-                        >
-                          🗑️
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </For>
-            </div>
+                  )}
+                </For>
+              </div>
+            </Show>
           </Show>
         </div>
       </main>

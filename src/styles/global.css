@@ -2,7 +2,7 @@
 
 @layer base {
   body {
-    @apply bg-[#0f1117] text-white antialiased font-sans;
+    @apply bg-[#0f1117] text-white antialiased font-sans transition-colors duration-300;
     -webkit-tap-highlight-color: transparent;
   }
 }
@@ -38,6 +38,67 @@
     background-size: 200% 100%;
     animation: shimmer 1.6s infinite;
   }
+}
+
+/* Light Theme overrides */
+html.light-mode body {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+html.light-mode .glass {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+html.light-mode .glass-card {
+  background: #ffffff;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
+}
+
+html.light-mode .text-white {
+  color: #0f172a !important;
+}
+
+html.light-mode .text-white\/40,
+html.light-mode .text-white\/35 {
+  color: #64748b !important;
+}
+
+html.light-mode .text-white\/30,
+html.light-mode .text-white\/25,
+html.light-mode .text-white\/20,
+html.light-mode .text-white\/15 {
+  color: #94a3b8 !important;
+}
+
+html.light-mode .text-white\/60,
+html.light-mode .text-white\/70,
+html.light-mode .text-white\/80 {
+  color: #334155 !important;
+}
+
+html.light-mode .bg-white\/5,
+html.light-mode .bg-white\/3 {
+  background-color: rgba(0, 0, 0, 0.04) !important;
+}
+
+html.light-mode .border-white\/5,
+html.light-mode .border-white\/8,
+html.light-mode .border-white\/4 {
+  border-color: rgba(0, 0, 0, 0.08) !important;
+}
+
+html.light-mode .shimmer {
+  background: linear-gradient(90deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.6s infinite;
 }
 
 @keyframes shimmer {
