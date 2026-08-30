@@ -12,6 +12,7 @@ CREATE TABLE IF NOT EXISTS categories (
   name TEXT NOT NULL,
   allocated_budget REAL NOT NULL DEFAULT 0,
   month_year TEXT NOT NULL, -- YYYY-MM
+  created_by INTEGER REFERENCES users(id),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(name, month_year)
 );
@@ -23,6 +24,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   amount REAL NOT NULL,
   date TEXT NOT NULL, -- YYYY-MM-DD
   note TEXT,
+  created_by INTEGER REFERENCES users(id),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
 );
@@ -33,12 +35,12 @@ CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
 
 -- Category templates: reusable preset categories the user can manage from the UI
--- (previously hardcoded). Seeded from the default presets on first run.
 CREATE TABLE IF NOT EXISTS category_templates (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   name TEXT NOT NULL,
   allocated_budget REAL NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL DEFAULT 0,
+  created_by INTEGER REFERENCES users(id),
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -49,5 +51,7 @@ CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   username TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
+  display_name TEXT NOT NULL DEFAULT '',
+  is_active INTEGER NOT NULL DEFAULT 1,
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );

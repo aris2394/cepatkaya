@@ -5,6 +5,7 @@ import { BudgetGauge, formatIDR } from './ui/BudgetGauge';
 import { IncomeModal } from './IncomeModal';
 import { CategoryModal } from './CategoryModal';
 import { TemplateManager } from './TemplateManager';
+import { UserManager } from './UserManager';
 import { ExpenseLogger } from './ExpenseLogger';
 import { ExpenseChart } from './ExpenseChart';
 
@@ -27,6 +28,7 @@ export const Dashboard = () => {
   const [isCategoryModalOpen, setIsCategoryModalOpen] = createSignal(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = createSignal(false);
   const [isTemplateManagerOpen, setIsTemplateManagerOpen] = createSignal(false);
+  const [isUserManagerOpen, setIsUserManagerOpen] = createSignal(false);
   const [deletingId, setDeletingId] = createSignal<number | null>(null);
   const [editingCategory, setEditingCategory] = createSignal<any>(null);
   const [editingExpense, setEditingExpense] = createSignal<any>(null);
@@ -169,6 +171,14 @@ export const Dashboard = () => {
             </div>
           </div>
           <div class="flex items-center gap-2">
+            <button
+              onClick={() => setIsUserManagerOpen(true)}
+              title="Kelola Akun Admin"
+              class="px-2.5 py-1.5 flex items-center gap-1 rounded-xl bg-white/5 text-white/70 hover:text-white hover:bg-white/10 border border-white/5 transition-all active:scale-95 text-xs font-semibold"
+            >
+              <span>👤</span>
+              <span class="hidden sm:inline">Kelola Akun</span>
+            </button>
             <button
               onClick={handleLogout}
               title="Log out"
@@ -483,8 +493,14 @@ export const Dashboard = () => {
                       </div>
                       <div class="min-w-0 flex-1">
                         <div class="font-semibold text-white text-sm leading-tight truncate">{exp.category_name}</div>
-                        <div class="text-[11px] text-white/35 mt-1 flex items-center gap-1.5">
+                        <div class="text-[11px] text-white/35 mt-1 flex items-center gap-1.5 flex-wrap">
                           <span class="whitespace-nowrap">{exp.date}</span>
+                          {exp.created_by_name && (
+                            <>
+                              <span class="text-white/20 shrink-0">•</span>
+                              <span class="text-[10px] font-semibold text-rose-300/80 bg-rose-500/10 px-1.5 py-0.5 rounded-md">by {exp.created_by_name}</span>
+                            </>
+                          )}
                           {exp.note && <><span class="text-white/20 shrink-0">•</span><span class="truncate">{exp.note}</span></>}
                         </div>
                       </div>
@@ -547,6 +563,10 @@ export const Dashboard = () => {
         onClose={() => setIsTemplateManagerOpen(false)}
         onSuccess={fetchData}
         currentMonth={selectedMonth()}
+      />
+      <UserManager
+        isOpen={isUserManagerOpen()}
+        onClose={() => setIsUserManagerOpen(false)}
       />
       <ExpenseLogger
         isOpen={isExpenseModalOpen()}

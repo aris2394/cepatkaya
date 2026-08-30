@@ -103,21 +103,28 @@ async function hmac(message: string, secret: string): Promise<string> {
   return toBase64Url(new Uint8Array(sig));
 }
 
+export interface User {
+  id: number;
+  username: string;
+  display_name: string;
+  is_active: number;
+}
+
 // ---------------------------------------------------------------------------
 // Public session API
 // ---------------------------------------------------------------------------
 
-export async function createSession(locals: any, username: string): Promise<{ cookie: string }> {
+export async function createSession(locals: any, user: { id: number; username: string; display_name: string }): Promise<{ cookie: string }> {
   const store = await getSessionStore();
   const name = 'ck_session';
   if (store.type === 'kv') {
     const id = crypto.randomUUID();
-    await store.kv.put(id, JSON.stringify({ username, createdAt: Date.now() }), {
+    await store.kv.put(id, JSON.stringify({ userId: user.id, username: user.username, displayName: user.display_name, createdAt: Date.now() }), {
       expirationTtl: SESSION_TTL,
     });
     return { cookie: buildCookie(name, id, { maxAge: SESSION_TTL }) };
   }
-  const payload = toBase64Url(enc.encode(JSON.stringify({ u: username, iat: Date.now() })));
+  const payload = toBase64Url(enc.encode(JSON.stringify({ id: user.id, u: user.username, d: user.display_name, iat: Date.now() })));
   const sig = await hmac(payload, store.secret);
   const token = `${payload}.${sig}`;
   return { cookie: buildCookie(name, token, { maxAge: SESSION_TTL }) };
@@ -131,33 +138,64 @@ export async function destroySession(locals: any, token: string | undefined): Pr
   return { cookie: buildCookie('ck_session', '', { clear: true }) };
 }
 
-export async function getCurrentUser(locals: any, token: string | undefined): Promise<string | null> {
+export async function getCurrentUser(locals: any, token: string | undefined): Promise<User | null> {
   if (!token) return null;
   const store = await getSessionStore();
+  let userId: number | null = null;
+  let username: string | null = null;
+
   if (store.type === 'kv') {
     const raw = await store.kv.get(token).catch(() => null);
     if (!raw) return null;
     try {
       const data = JSON.parse(raw);
-      return data.username || null;
+      userId = data.userId || null;
+      username = data.username || null;
+    } catch {
+      return null;
+    }
+  } else {
+    const [payload, sig] = token.split('.');
+    if (!payload || !sig) return null;
+    const expected = await hmac(payload, store.secret);
+    if (!constantTimeEqual(expected, sig)) return null;
+    try {
+      const data = JSON.parse(new TextDecoder().decode(fromBase64Url(payload)));
+      if (!data.iat || Date.now() - data.iat > SESSION_TTL * 1000) return null;
+      userId = data.id || null;
+      username = data.u || null;
     } catch {
       return null;
     }
   }
-  const [payload, sig] = token.split('.');
-  if (!payload || !sig) return null;
-  const expected = await hmac(payload, store.secret);
-  if (!constantTimeEqual(expected, sig)) return null;
-  try {
-    const data = JSON.parse(new TextDecoder().decode(fromBase64Url(payload)));
-    if (!data.iat || Date.now() - data.iat > SESSION_TTL * 1000) return null;
-    return data.u || null;
-  } catch {
+
+  if (!userId && !username) return null;
+
+  const db = await getDb(locals);
+  if (!db) {
+    if (userId && username) {
+      return { id: userId, username, display_name: username, is_active: 1 };
+    }
     return null;
   }
+
+  let row: any = null;
+  if (userId) {
+    row = await db.prepare('SELECT id, username, display_name, is_active FROM users WHERE id = ? AND is_active = 1').bind(userId).first();
+  } else if (username) {
+    row = await db.prepare('SELECT id, username, display_name, is_active FROM users WHERE username = ? AND is_active = 1').bind(username).first();
+  }
+
+  if (!row) return null;
+  return {
+    id: Number(row.id),
+    username: row.username,
+    display_name: row.display_name || row.username,
+    is_active: Number(row.is_active),
+  };
 }
 
-export async function requireUser(ctx: { cookies: any; locals: any }): Promise<string | null> {
+export async function requireUser(ctx: { cookies: any; locals: any }): Promise<User | null> {
   const token = ctx.cookies.get('ck_session')?.value;
   return getCurrentUser(ctx.locals, token);
 }
@@ -187,28 +225,40 @@ export function rateLimit(key: string, limit = 5, windowMs = 60_000): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// First-run admin seeding (only if no users exist)
+// First-run admin seeding (only if initial admin accounts are missing)
 // ---------------------------------------------------------------------------
 
 export async function ensureSeedUser(locals: any): Promise<void> {
   const db = await getDb(locals);
-  const row = await db.prepare('SELECT COUNT(*) as c FROM users').bind().first<{ c: number }>();
-  if (row && row.c > 0) return;
+  if (!db) return;
 
   const cf = await getCfEnv();
-  const pw =
-    cf?.ADMIN_PASSWORD ||
-    process.env.ADMIN_PASSWORD ||
-    '123qazaqw';
-  const hash = await hashPassword(pw);
-  await db
-    .prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
-    .bind('admin', hash)
-    .run();
+  const adminPw = cf?.ADMIN_PASSWORD || process.env.ADMIN_PASSWORD || '123qazaqw';
+  const wifePw = cf?.WIFE_PASSWORD || process.env.WIFE_PASSWORD || '123qazaqw';
 
-  if (!locals?.runtime?.env?.ADMIN_PASSWORD && !process.env.ADMIN_PASSWORD) {
-    console.warn(
-      '[CepatKaya] No ADMIN_PASSWORD env set — seeded default admin with password "123qazaqw". CHANGE IT.'
-    );
+  // Migration helper: If legacy 'admin' exists without display_name, convert to 'aris'
+  const legacyAdmin = await db.prepare('SELECT id FROM users WHERE username = ?').bind('admin').first();
+  if (legacyAdmin) {
+    await db.prepare('UPDATE users SET username = ?, display_name = ? WHERE username = ?').bind('aris', 'Aris', 'admin').run();
+  }
+
+  // Seed user 'aris' if not existing
+  const userAris = await db.prepare('SELECT id FROM users WHERE username = ?').bind('aris').first();
+  if (!userAris) {
+    const hashAris = await hashPassword(adminPw);
+    await db
+      .prepare('INSERT INTO users (username, password_hash, display_name, is_active) VALUES (?, ?, ?, 1)')
+      .bind('aris', hashAris, 'Aris')
+      .run();
+  }
+
+  // Seed user 'istri' if not existing
+  const userIstri = await db.prepare('SELECT id FROM users WHERE username = ?').bind('istri').first();
+  if (!userIstri) {
+    const hashIstri = await hashPassword(wifePw);
+    await db
+      .prepare('INSERT INTO users (username, password_hash, display_name, is_active) VALUES (?, ?, ?, 1)')
+      .bind('istri', hashIstri, 'Istri')
+      .run();
   }
 }

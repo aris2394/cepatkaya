@@ -11,6 +11,7 @@ interface Tpl {
   id: number;
   name: string;
   allocated_budget: number;
+  created_by_name?: string;
 }
 
 const fmtIDR = (n: number) =>
@@ -198,7 +199,12 @@ export const TemplateManager = (props: TemplateManagerProps) => {
                 <div class="flex items-center justify-between gap-2 p-3 rounded-2xl bg-white/3 border border-white/5 hover:bg-white/5 transition">
                   <div class="min-w-0 flex-1">
                     <div class="font-semibold text-white text-sm truncate">{t.name}</div>
-                    <div class="text-[11px] text-white/40">{fmtIDR(t.allocated_budget)}</div>
+                    <div class="flex items-center gap-2 text-[11px] text-white/40">
+                      <span>{fmtIDR(t.allocated_budget)}</span>
+                      <Show when={t.created_by_name}>
+                        <span class="text-[10px] text-rose-300/60 font-medium">by {t.created_by_name}</span>
+                      </Show>
+                    </div>
                   </div>
                   <div class="flex items-center gap-1 shrink-0">
                     <button

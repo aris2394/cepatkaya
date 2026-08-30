@@ -34,9 +34,9 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   await ensureSeedUser(locals);
 
   const row = await db
-    .prepare('SELECT password_hash FROM users WHERE username = ?')
+    .prepare('SELECT id, username, display_name, password_hash, is_active FROM users WHERE username = ?')
     .bind(username)
-    .first<{ password_hash: string }>();
+    .first<{ id: number; username: string; display_name: string; password_hash: string; is_active: number }>();
 
   if (!row || !(await verifyPassword(password, row.password_hash))) {
     return new Response(JSON.stringify({ error: 'Username atau kata sandi salah!' }), {
@@ -44,8 +44,20 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     });
   }
 
-  const { cookie } = await createSession(locals, username);
-  return new Response(JSON.stringify({ success: true }), {
+  if (row.is_active !== 1) {
+    return new Response(JSON.stringify({ error: 'Akun Anda tidak aktif' }), {
+      status: 403,
+    });
+  }
+
+  const user = {
+    id: Number(row.id),
+    username: row.username,
+    display_name: row.display_name || row.username,
+  };
+
+  const { cookie } = await createSession(locals, user);
+  return new Response(JSON.stringify({ success: true, user }), {
     status: 200,
     headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookie },
   });

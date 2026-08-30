@@ -60,9 +60,10 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
     // 3. Recent 5 expenses for the month
     const { results: recentExpenses } = await db
       .prepare(`
-        SELECT e.*, c.name as category_name 
+        SELECT e.*, c.name as category_name, u.display_name as created_by_name 
         FROM expenses e
         JOIN categories c ON e.category_id = c.id
+        LEFT JOIN users u ON e.created_by = u.id
         WHERE c.month_year = ?
         ORDER BY e.date DESC, e.id DESC
         LIMIT 5

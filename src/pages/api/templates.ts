@@ -15,7 +15,12 @@ export const GET: APIRoute = async ({ locals, cookies }) => {
   try {
     await ensureSeedTemplates(locals);
     const { results } = await db
-      .prepare('SELECT * FROM category_templates ORDER BY sort_order ASC, id ASC')
+      .prepare(`
+        SELECT t.*, u.display_name as created_by_name 
+        FROM category_templates t 
+        LEFT JOIN users u ON t.created_by = u.id 
+        ORDER BY t.sort_order ASC, t.id ASC
+      `)
       .bind()
       .all();
     return new Response(JSON.stringify(results), { status: 200 });
@@ -51,8 +56,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
       for (let i = 0; i < results.length; i++) {
         const item = results[i] as any;
         await db
-          .prepare('INSERT INTO category_templates (name, allocated_budget, sort_order) VALUES (?, ?, ?)')
-          .bind(item.name, item.allocated_budget, i)
+          .prepare('INSERT INTO category_templates (name, allocated_budget, sort_order, created_by) VALUES (?, ?, ?, ?)')
+          .bind(item.name, item.allocated_budget, i, user.id)
           .run();
       }
 
@@ -70,8 +75,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     await db
-      .prepare('INSERT INTO category_templates (name, allocated_budget) VALUES (?, ?)')
-      .bind(name.trim(), budget)
+      .prepare('INSERT INTO category_templates (name, allocated_budget, created_by) VALUES (?, ?, ?)')
+      .bind(name.trim(), budget, user.id)
       .run();
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });

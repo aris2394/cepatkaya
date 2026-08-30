@@ -8,6 +8,7 @@ type ENV = {
   SESSION?: any;
   SESSION_SECRET?: string;
   ADMIN_PASSWORD?: string;
+  WIFE_PASSWORD?: string;
 };
 
 type Runtime = import('@astrojs/cloudflare').Runtime<ENV>;

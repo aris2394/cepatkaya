@@ -18,6 +18,8 @@ export interface Expense {
   date: string; // Format: YYYY-MM-DD
   note?: string;
   category_name?: string;
+  created_by?: number;
+  created_by_name?: string;
 }
 
 export interface CategoryStatus extends Category {

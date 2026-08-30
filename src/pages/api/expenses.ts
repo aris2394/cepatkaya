@@ -17,9 +17,10 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
 
   try {
     let query = `
-      SELECT e.*, c.name as category_name 
+      SELECT e.*, c.name as category_name, u.display_name as created_by_name 
       FROM expenses e 
       JOIN categories c ON e.category_id = c.id
+      LEFT JOIN users u ON e.created_by = u.id
     `;
     const params: any[] = [];
 
@@ -69,8 +70,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     }
 
     const res = await db
-      .prepare('INSERT INTO expenses (category_id, amount, date, note) VALUES (?, ?, ?, ?)')
-      .bind(catId, amt, date, note || '')
+      .prepare('INSERT INTO expenses (category_id, amount, date, note, created_by) VALUES (?, ?, ?, ?, ?)')
+      .bind(catId, amt, date, note || '', user.id)
       .run();
 
     return new Response(JSON.stringify({ success: true, id: res.meta.last_row_id }), { status: 201 });
