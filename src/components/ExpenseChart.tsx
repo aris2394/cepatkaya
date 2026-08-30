@@ -81,7 +81,7 @@ export const ExpenseChart = (props: { categories: CategoryStatus[] }) => {
       }
     },
     cutout: '70%',
-  };
+  });
 
   return (
     <div class="h-64 w-full relative">
