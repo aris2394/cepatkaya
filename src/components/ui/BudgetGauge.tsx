@@ -37,9 +37,9 @@ export const BudgetGauge = (props: BudgetGaugeProps) => {
       emoji: '🟡'
     };
     return {
-      bar: 'from-indigo-500 to-violet-500',
-      badge: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-      glow: 'shadow-indigo-500/20',
+      bar: 'from-rose-500 to-pink-500',
+      badge: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+      glow: 'shadow-rose-500/20',
       label: 'Healthy',
       emoji: '🟢'
     };

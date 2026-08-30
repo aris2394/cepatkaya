@@ -80,7 +80,7 @@ export const CategoryModal = (props: CategoryModalProps) => {
     }
   };
 
-  const inputClass = "w-full px-4 py-3 bg-white/5 border border-white/8 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/8 focus:border-indigo-500/30 transition-all placeholder:text-white/25 text-sm";
+  const inputClass = "w-full px-4 py-3 bg-white/5 border border-white/8 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:bg-white/8 focus:border-rose-500/30 transition-all placeholder:text-white/25 text-sm";
 
   return (
     <Show when={props.isOpen}>
@@ -128,7 +128,7 @@ export const CategoryModal = (props: CategoryModalProps) => {
                       onClick={() => setName(`${preset.icon} ${preset.label}`)}
                       class={`px-3 py-1.5 text-xs rounded-xl border transition-all active:scale-95 font-medium ${
                         name() === `${preset.icon} ${preset.label}`
-                          ? 'bg-indigo-500/20 border-indigo-500/40 text-indigo-300'
+                          ? 'bg-rose-500/20 border-rose-500/40 text-rose-300'
                           : 'bg-white/5 border-white/8 text-white/60 hover:bg-white/10 hover:text-white hover:border-white/15'
                       }`}
                     >
@@ -184,7 +184,7 @@ export const CategoryModal = (props: CategoryModalProps) => {
                 <button
                   type="submit"
                   disabled={loading()}
-                  class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-600 text-sm font-black text-white shadow-lg shadow-indigo-500/30 hover:from-indigo-400 hover:to-violet-500 disabled:opacity-40 transition-all active:scale-95"
+                  class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-sm font-black text-white shadow-lg shadow-rose-500/30 hover:from-rose-400 hover:to-pink-500 disabled:opacity-40 transition-all active:scale-95"
                 >
                   {loading() ? 'Saving...' : (props.editData ? 'Update Category' : 'Add Category')}
                 </button>

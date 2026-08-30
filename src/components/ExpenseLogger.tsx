@@ -75,7 +75,7 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
     }
   };
 
-  const inputClass = "w-full px-4 py-3 bg-white/5 border border-white/8 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/8 focus:border-indigo-500/30 transition-all placeholder:text-white/25 text-sm";
+  const inputClass = "w-full px-4 py-3 bg-white/5 border border-white/8 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:bg-white/8 focus:border-rose-500/30 transition-all placeholder:text-white/25 text-sm";
   const labelClass = "block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5";
 
   return (
@@ -182,7 +182,7 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
                 <button
                   type="submit"
                   disabled={loading() || props.categories.length === 0}
-                  class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-600 text-sm font-black text-white shadow-lg shadow-indigo-500/30 hover:from-indigo-400 hover:to-violet-500 disabled:opacity-40 transition-all active:scale-95"
+                  class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-sm font-black text-white shadow-lg shadow-rose-500/30 hover:from-rose-400 hover:to-pink-500 disabled:opacity-40 transition-all active:scale-95"
                 >
                   {loading() ? (
                     <span class="flex items-center justify-center gap-2">

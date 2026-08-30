@@ -98,8 +98,8 @@ export const Dashboard = () => {
     <div class="max-w-md mx-auto min-h-screen bg-[#0f1117] pb-28 relative overflow-x-hidden">
       {/* Background ambient glow */}
       <div class="fixed inset-0 pointer-events-none overflow-hidden">
-        <div class="absolute -top-40 -left-20 w-72 h-72 bg-indigo-600/10 rounded-full blur-3xl" />
-        <div class="absolute top-60 -right-20 w-64 h-64 bg-violet-600/8 rounded-full blur-3xl" />
+        <div class="absolute -top-40 -left-20 w-72 h-72 bg-rose-600/10 rounded-full blur-3xl" />
+        <div class="absolute top-60 -right-20 w-64 h-64 bg-pink-600/8 rounded-full blur-3xl" />
         <div class="absolute bottom-40 left-10 w-48 h-48 bg-cyan-600/6 rounded-full blur-3xl" />
       </div>
 
@@ -107,9 +107,7 @@ export const Dashboard = () => {
       <header class="relative px-5 pt-12 pb-16">
         <div class="flex items-center justify-between mb-8">
           <div class="flex items-center gap-3">
-            <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center font-black text-base tracking-wider shadow-lg shadow-indigo-500/30">
-              CK
-            </div>
+            <img src="/logo.png" alt="CepatKaya Logo" class="w-11 h-11 object-contain drop-shadow-[0_4px_8px_rgba(244,63,94,0.3)]" />
             <div>
               <h1 class="text-base font-black tracking-tight text-white leading-none">CepatKaya</h1>
               <p class="text-[11px] text-white/40 font-medium mt-0.5">Family Financial Monitor</p>
@@ -119,7 +117,7 @@ export const Dashboard = () => {
             type="month"
             value={selectedMonth()}
             onChange={(e) => handleMonthChange(e.currentTarget.value)}
-            class="glass px-3 py-1.5 rounded-xl text-xs font-semibold text-white/80 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 cursor-pointer transition hover:bg-white/10"
+            class="glass px-3 py-1.5 rounded-xl text-xs font-semibold text-white/80 focus:outline-none focus:ring-1 focus:ring-rose-500/50 cursor-pointer transition hover:bg-white/10"
           />
         </div>
 
@@ -140,7 +138,7 @@ export const Dashboard = () => {
           </div>
           <button
             onClick={() => setIsIncomeModalOpen(true)}
-            class="px-3.5 py-2 bg-gradient-to-r from-indigo-500 to-violet-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-indigo-500/30 active:scale-95 transition-all hover:shadow-indigo-500/50 hover:scale-105"
+            class="px-3.5 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-rose-500/30 active:scale-95 transition-all hover:shadow-rose-500/50 hover:scale-105"
           >
             Set Income
           </button>
@@ -239,7 +237,7 @@ export const Dashboard = () => {
             </div>
             <button
               onClick={() => setIsCategoryModalOpen(true)}
-              class="flex items-center gap-1 px-3 py-1.5 bg-indigo-500/10 text-indigo-400 hover:bg-indigo-500/20 rounded-xl text-xs font-bold border border-indigo-500/20 transition-all active:scale-95"
+              class="flex items-center gap-1 px-3 py-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-xl text-xs font-bold border border-rose-500/20 transition-all active:scale-95"
             >
               <span class="text-sm leading-none">+</span> Add
             </button>
@@ -265,7 +263,7 @@ export const Dashboard = () => {
                   <p class="text-white/30 text-xs">No budget categories yet</p>
                   <button
                     onClick={() => setIsCategoryModalOpen(true)}
-                    class="mt-3 px-4 py-2 bg-indigo-500/10 text-indigo-400 rounded-xl text-xs font-bold border border-indigo-500/20 hover:bg-indigo-500/20 transition"
+                    class="mt-3 px-4 py-2 bg-rose-500/10 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 hover:bg-rose-500/20 transition"
                   >
                     Create your first category
                   </button>
@@ -291,7 +289,7 @@ export const Dashboard = () => {
                         <div class="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                           <button
                             onClick={() => { setEditingCategory(cat); setIsCategoryModalOpen(true); }}
-                            class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all text-sm"
+                            class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
                             title="Edit"
                           >
                             ✏️
@@ -376,7 +374,7 @@ export const Dashboard = () => {
                       <div class="flex items-center opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity gap-1">
                         <button
                           onClick={() => { setEditingExpense(exp); setIsExpenseModalOpen(true); }}
-                          class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all text-sm"
+                          class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
                           title="Edit"
                         >
                           ✏️
@@ -402,7 +400,7 @@ export const Dashboard = () => {
       <div class="fixed bottom-0 inset-x-0 max-w-md mx-auto px-4 pb-6 pt-8 bg-gradient-to-t from-[#0f1117] via-[#0f1117]/90 to-transparent pointer-events-none z-40">
         <button
           onClick={() => setIsExpenseModalOpen(true)}
-          class="w-full pointer-events-auto py-4 bg-gradient-to-r from-indigo-500 to-violet-600 hover:from-indigo-400 hover:to-violet-500 active:scale-[0.97] text-white font-black rounded-2xl shadow-2xl shadow-indigo-500/40 flex items-center justify-center gap-2.5 text-sm transition-all duration-200 hover:shadow-indigo-500/60"
+          class="w-full pointer-events-auto py-4 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 active:scale-[0.97] text-white font-black rounded-2xl shadow-2xl shadow-rose-500/40 flex items-center justify-center gap-2.5 text-sm transition-all duration-200 hover:shadow-rose-500/60"
         >
           <span class="text-xl leading-none font-black">+</span>
           Log Expense

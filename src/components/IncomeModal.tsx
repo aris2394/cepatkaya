@@ -45,7 +45,7 @@ export const IncomeModal = (props: IncomeModalProps) => {
     }
   };
 
-  const inputClass = "w-full px-4 py-3 bg-white/5 border border-white/8 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:bg-white/8 focus:border-indigo-500/30 transition-all placeholder:text-white/25 text-sm";
+  const inputClass = "w-full px-4 py-3 bg-white/5 border border-white/8 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:bg-white/8 focus:border-rose-500/30 transition-all placeholder:text-white/25 text-sm";
 
   return (
     <Show when={props.isOpen}>
