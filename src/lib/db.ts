@@ -50,27 +50,28 @@ function getLocalSqlite() {
   };
 }
 
-export async function getDb(locals: any) {
-  let cloudflareDb = null;
+let cachedCfEnv: any = null;
+let cfEnvResolved = false;
+
+// In Astro v6+/Cloudflare Workers, bindings (DB, KV, secrets) are exposed via the
+// `cloudflare:workers` module's `env`, NOT `locals.runtime.env` (which now throws).
+// Resolves to `null` outside the Workers runtime (e.g. local `astro dev`), allowing
+// the local SQLite fallback to take over.
+export async function getCfEnv(): Promise<any | null> {
+  if (cfEnvResolved) return cachedCfEnv;
+  cfEnvResolved = true;
   try {
-    // In Astro v6+, accessing locals.runtime.env throws an error.
-    cloudflareDb = locals?.runtime?.env?.DB || locals?.env?.DB;
-  } catch (e) {
-    // ignore Astro v6 throwing error
+    const { env } = await import(/* @vite-ignore */ 'cloudflare:workers');
+    cachedCfEnv = env || null;
+  } catch {
+    cachedCfEnv = null;
   }
+  return cachedCfEnv;
+}
 
-  if (!cloudflareDb) {
-    try {
-      const mod = 'cloudflare:workers';
-      const { env } = await import(/* @vite-ignore */ mod);
-      if (env && env.DB) {
-        cloudflareDb = env.DB;
-      }
-    } catch (e) {
-      // ignore import error locally
-    }
-  }
-
+export async function getDb(_locals?: any) {
+  const cf = await getCfEnv();
+  const cloudflareDb = cf?.DB;
   if (cloudflareDb) {
     return cloudflareDb;
   }

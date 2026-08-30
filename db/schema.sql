@@ -31,3 +31,11 @@ CREATE INDEX IF NOT EXISTS idx_incomes_month ON incomes(month_year);
 CREATE INDEX IF NOT EXISTS idx_categories_month ON categories(month_year);
 CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
+
+-- Users table: application accounts (password stored as salt:pbkdf2-hash)
+CREATE TABLE IF NOT EXISTS users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);

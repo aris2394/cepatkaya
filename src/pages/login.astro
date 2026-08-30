@@ -1,31 +1,5 @@
 ---
 import Layout from '../layouts/Layout.astro';
-
-let error = '';
-
-if (Astro.request.method === 'POST') {
-  try {
-    const data = await Astro.request.formData();
-    const username = data.get('username')?.toString();
-    const password = data.get('password')?.toString();
-    
-    if (username === 'admin' && password === '123qazaqw') {
-      // Set secure HTTP-only cookie
-      Astro.cookies.set('auth_token', 'secure-admin-token-123qazaqw', { 
-        path: '/', 
-        httpOnly: true,
-        secure: import.meta.env.PROD, // Secure in production (HTTPS)
-        sameSite: 'lax',
-        maxAge: 60 * 60 * 24 * 7 // 1 week
-      });
-      return Astro.redirect('/');
-    } else {
-      error = 'Username atau kata sandi salah!';
-    }
-  } catch (err) {
-    error = 'Terjadi kesalahan sistem';
-  }
-}
 ---
 
 <Layout title="Login - CepatKaya">
@@ -34,7 +8,7 @@ if (Astro.request.method === 'POST') {
       <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px]"></div>
       <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-rose-500/10 rounded-full blur-[120px]"></div>
     </div>
-    
+
     <div class="relative z-10 w-full max-w-md bg-[#161921] border border-white/5 rounded-3xl p-8 shadow-2xl animate-fade-in">
       <div class="text-center mb-8">
         <img src="/logo.png" alt="CepatKaya Logo" class="w-20 h-20 mx-auto object-contain drop-shadow-[0_4px_8px_rgba(244,63,94,0.3)] mb-6" />
@@ -42,39 +16,41 @@ if (Astro.request.method === 'POST') {
         <p class="text-sm text-white/40 mt-2 font-medium">Log in to manage your finances</p>
       </div>
 
-      {error && (
-        <div class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold text-center">
-          ⚠️ {error}
-        </div>
-      )}
+      <div
+        id="login-error"
+        class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold text-center"
+        style="display:none"
+      ></div>
 
-      <form method="POST" class="space-y-5">
+      <form id="login-form" class="space-y-5">
         <div>
           <label for="username" class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Username</label>
-          <input 
-            type="text" 
+          <input
+            type="text"
             id="username"
-            name="username" 
-            required 
+            name="username"
+            required
             placeholder="Enter username"
-            class="w-full px-5 py-3.5 bg-[#0A0C10] border border-white/5 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500/50 transition-all placeholder:text-white/20"
-          />
-        </div>
-        
-        <div>
-          <label for="password" class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Password</label>
-          <input 
-            type="password" 
-            id="password"
-            name="password" 
-            required 
-            placeholder="Enter password"
+            autocomplete="username"
             class="w-full px-5 py-3.5 bg-[#0A0C10] border border-white/5 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500/50 transition-all placeholder:text-white/20"
           />
         </div>
 
-        <button 
-          type="submit" 
+        <div>
+          <label for="password" class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Password</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            required
+            placeholder="Enter password"
+            autocomplete="current-password"
+            class="w-full px-5 py-3.5 bg-[#0A0C10] border border-white/5 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-rose-500/50 focus:border-rose-500/50 transition-all placeholder:text-white/20"
+          />
+        </div>
+
+        <button
+          type="submit"
           class="w-full mt-2 py-4 rounded-2xl bg-gradient-to-r from-rose-500 to-pink-600 text-white font-black text-sm uppercase tracking-wide shadow-lg shadow-rose-500/25 hover:shadow-rose-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
         >
           Secure Login
@@ -82,4 +58,41 @@ if (Astro.request.method === 'POST') {
       </form>
     </div>
   </main>
+
+  <script>
+    const form = document.getElementById('login-form') as HTMLFormElement;
+    const errorEl = document.getElementById('login-error') as HTMLDivElement;
+    const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      errorEl.style.display = 'none';
+      btn.disabled = true;
+      const original = btn.textContent;
+      btn.textContent = 'Logging in...';
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            username: (form.elements.namedItem('username') as HTMLInputElement).value,
+            password: (form.elements.namedItem('password') as HTMLInputElement).value,
+          }),
+        });
+        if (res.ok) {
+          window.location.href = '/';
+          return;
+        }
+        const data = await res.json().catch(() => ({}));
+        errorEl.textContent = '⚠️ ' + (data.error || 'Login failed');
+        errorEl.style.display = 'block';
+      } catch {
+        errorEl.textContent = '⚠️ Network error';
+        errorEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = original;
+      }
+    });
+  </script>
 </Layout>

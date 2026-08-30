@@ -82,6 +82,59 @@ export const Dashboard = () => {
     }
   };
 
+  const [rolling, setRolling] = createSignal(false);
+  const [loadingPresets, setLoadingPresets] = createSignal(false);
+
+  const getPreviousMonth = () => {
+    const [y, m] = selectedMonth().split('-').map(Number);
+    const p = new Date(y, m - 1, 0); // last day of previous month
+    return `${p.getFullYear()}-${String(p.getMonth() + 1).padStart(2, '0')}`;
+  };
+
+  const handleRollover = async () => {
+    if (!confirm('Copy categories & budgets from last month into this month?')) return;
+    setRolling(true);
+    try {
+      const res = await fetch('/api/categories/rollover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month_year: selectedMonth(), from_month: getPreviousMonth() }),
+      });
+      if (res.ok) fetchData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setRolling(false);
+    }
+  };
+
+  const handleLoadPresets = async () => {
+    if (!confirm('Load the 12 default preset categories for this month?')) return;
+    setLoadingPresets(true);
+    try {
+      const res = await fetch('/api/categories/presets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ month_year: selectedMonth() }),
+      });
+      if (res.ok) fetchData();
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoadingPresets(false);
+    }
+  };
+
+  const handleLogout = async () => {
+    if (!confirm('Log out?')) return;
+    await fetch('/api/auth/logout', { method: 'POST' });
+    window.location.href = '/login';
+  };
+
+  const overBudgetCats = () => (data()?.categories || []).filter((c) => c.percentage >= 100);
+  const warningCats = () =>
+    (data()?.categories || []).filter((c) => c.percentage >= 80 && c.percentage < 100);
+
   const overallSpentPercentage = () => {
     const d = data();
     if (!d || d.total_allocated === 0) return 0;
@@ -105,7 +158,7 @@ export const Dashboard = () => {
 
       {/* ── Header ── */}
       <header class="relative px-5 pt-12 pb-16">
-        <div class="flex items-center justify-between mb-8">
+        <div class="flex items-center justify-between gap-2 mb-8">
           <div class="flex items-center gap-3">
             <img src="/logo.png" alt="CepatKaya Logo" class="w-11 h-11 object-contain drop-shadow-[0_4px_8px_rgba(244,63,94,0.3)]" />
             <div>
@@ -113,12 +166,21 @@ export const Dashboard = () => {
               <p class="text-[11px] text-white/40 font-medium mt-0.5">Family Financial Monitor</p>
             </div>
           </div>
-          <input
-            type="month"
-            value={selectedMonth()}
-            onChange={(e) => handleMonthChange(e.currentTarget.value)}
-            class="glass px-3 py-1.5 rounded-xl text-xs font-semibold text-white/80 focus:outline-none focus:ring-1 focus:ring-rose-500/50 cursor-pointer transition hover:bg-white/10"
-          />
+          <div class="flex items-center gap-2">
+            <button
+              onClick={handleLogout}
+              title="Log out"
+              class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-white/50 hover:text-rose-400 hover:bg-rose-500/10 border border-white/5 transition-all active:scale-95 text-sm"
+            >
+              ⎋
+            </button>
+            <input
+              type="month"
+              value={selectedMonth()}
+              onChange={(e) => handleMonthChange(e.currentTarget.value)}
+              class="glass px-3 py-1.5 rounded-xl text-xs font-semibold text-white/80 focus:outline-none focus:ring-1 focus:ring-rose-500/50 cursor-pointer transition hover:bg-white/10"
+            />
+          </div>
         </div>
 
         {/* Income Banner */}
@@ -144,6 +206,24 @@ export const Dashboard = () => {
           </button>
         </div>
       </header>
+
+      {/* ── Budget alerts ── */}
+      <Show when={!loading() && (overBudgetCats().length > 0 || warningCats().length > 0)}>
+        <div class="px-4 -mt-2 mb-1 space-y-2">
+          <Show when={overBudgetCats().length > 0}>
+            <div class="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-start gap-2">
+              <span class="text-sm leading-none mt-0.5">🔴</span>
+              <span><b>{overBudgetCats().length}</b> category over budget: {overBudgetCats().map((c) => c.name).join(', ')}</span>
+            </div>
+          </Show>
+          <Show when={warningCats().length > 0}>
+            <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold flex items-start gap-2">
+              <span class="text-sm leading-none mt-0.5">🟡</span>
+              <span><b>{warningCats().length}</b> category near limit (&gt;80%): {warningCats().map((c) => c.name).join(', ')}</span>
+            </div>
+          </Show>
+        </div>
+      </Show>
 
       {/* ── Main ── */}
       <main class="px-4 -mt-6 space-y-4">
@@ -243,6 +323,23 @@ export const Dashboard = () => {
             </button>
           </div>
 
+          <div class="flex items-center gap-2 mb-4 flex-wrap">
+            <button
+              onClick={handleRollover}
+              disabled={rolling()}
+              class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95 disabled:opacity-40"
+            >
+              {rolling() ? 'Copying…' : '↻ Copy last month'}
+            </button>
+            <button
+              onClick={handleLoadPresets}
+              disabled={loadingPresets()}
+              class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95 disabled:opacity-40"
+            >
+              {loadingPresets() ? 'Loading…' : '✨ Load presets'}
+            </button>
+          </div>
+
           <Show when={loading()}>
             <div class="space-y-4">
               {[1, 2, 3].map(() => (
@@ -261,12 +358,21 @@ export const Dashboard = () => {
                 <div class="text-center py-8">
                   <div class="text-3xl mb-2">📂</div>
                   <p class="text-white/30 text-xs">No budget categories yet</p>
-                  <button
-                    onClick={() => setIsCategoryModalOpen(true)}
-                    class="mt-3 px-4 py-2 bg-rose-500/10 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 hover:bg-rose-500/20 transition"
-                  >
-                    Create your first category
-                  </button>
+                  <div class="flex flex-col items-center gap-2 mt-3">
+                    <button
+                      onClick={() => setIsCategoryModalOpen(true)}
+                      class="px-4 py-2 bg-rose-500/10 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 hover:bg-rose-500/20 transition"
+                    >
+                      Create your first category
+                    </button>
+                    <button
+                      onClick={handleLoadPresets}
+                      disabled={loadingPresets()}
+                      class="px-4 py-2 bg-white/5 text-white/60 rounded-xl text-xs font-bold border border-white/5 hover:bg-white/10 transition disabled:opacity-40"
+                    >
+                      {loadingPresets() ? 'Loading…' : '✨ Load 12 presets'}
+                    </button>
+                  </div>
                 </div>
               </Show>
             }

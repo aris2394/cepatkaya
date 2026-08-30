@@ -30,3 +30,6 @@ pnpm-debug.log*
 
 # Wrangler local state
 .wrangler/
+
+# AI tool state
+.workbuddy-ai/

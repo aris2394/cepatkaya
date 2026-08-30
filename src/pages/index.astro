@@ -1,8 +1,11 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Dashboard } from '../components/Dashboard';
+import { getCurrentUser } from '../lib/auth';
 
-if (Astro.cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
+const token = Astro.cookies.get('ck_session')?.value;
+const user = await getCurrentUser(Astro.locals, token);
+if (!user) {
   return Astro.redirect('/login');
 }
 ---
@@ -10,4 +13,3 @@ if (Astro.cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
 <Layout title="CepatKaya - Family Financial Monitor">
   <Dashboard client:load />
 </Layout>
-

@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../lib/db';
+import { requireUser, unauthorized } from '../../lib/auth';
+import { isValidDate, parseAmount } from '../../lib/validate';
 
 export const GET: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
@@ -44,9 +45,8 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
@@ -59,10 +59,18 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     if (!category_id || amount === undefined || !date) {
       return new Response(JSON.stringify({ error: 'Missing required expense fields' }), { status: 400 });
     }
+    const catId = Number(category_id);
+    const amt = parseAmount(amount);
+    if (!Number.isInteger(catId) || catId <= 0 || amt === null || amt <= 0) {
+      return new Response(JSON.stringify({ error: 'Invalid category or amount' }), { status: 400 });
+    }
+    if (!isValidDate(date)) {
+      return new Response(JSON.stringify({ error: 'Invalid date format (expected YYYY-MM-DD)' }), { status: 400 });
+    }
 
     const res = await db
       .prepare('INSERT INTO expenses (category_id, amount, date, note) VALUES (?, ?, ?, ?)')
-      .bind(Number(category_id), Number(amount), date, note || '')
+      .bind(catId, amt, date, note || '')
       .run();
 
     return new Response(JSON.stringify({ success: true, id: res.meta.last_row_id }), { status: 201 });
@@ -72,9 +80,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
@@ -87,10 +94,18 @@ export const PUT: APIRoute = async ({ request, locals, cookies }) => {
     if (!id || !category_id || amount === undefined || !date) {
       return new Response(JSON.stringify({ error: 'Missing required expense fields' }), { status: 400 });
     }
+    const catId = Number(category_id);
+    const amt = parseAmount(amount);
+    if (!Number.isInteger(catId) || catId <= 0 || amt === null || amt <= 0) {
+      return new Response(JSON.stringify({ error: 'Invalid category or amount' }), { status: 400 });
+    }
+    if (!isValidDate(date)) {
+      return new Response(JSON.stringify({ error: 'Invalid date format (expected YYYY-MM-DD)' }), { status: 400 });
+    }
 
     await db
       .prepare('UPDATE expenses SET category_id = ?, amount = ?, date = ?, note = ? WHERE id = ?')
-      .bind(Number(category_id), Number(amount), date, note || '', Number(id))
+      .bind(catId, amt, date, note || '', Number(id))
       .run();
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
@@ -100,9 +115,8 @@ export const PUT: APIRoute = async ({ request, locals, cookies }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });

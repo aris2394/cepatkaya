@@ -5,6 +5,9 @@ type D1Database = import('@cloudflare/workers-types').D1Database;
 
 type ENV = {
   DB: D1Database;
+  SESSION?: any;
+  SESSION_SECRET?: string;
+  ADMIN_PASSWORD?: string;
 };
 
 type Runtime = import('@astrojs/cloudflare').Runtime<ENV>;

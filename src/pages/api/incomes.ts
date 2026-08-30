@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../lib/db';
+import { requireUser, unauthorized } from '../../lib/auth';
+import { isValidMonth, parseAmount } from '../../lib/validate';
 
 export const GET: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
@@ -30,9 +31,8 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
@@ -45,6 +45,13 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     if (!month_year || total_amount === undefined) {
       return new Response(JSON.stringify({ error: 'Missing month_year or total_amount' }), { status: 400 });
     }
+    if (!isValidMonth(month_year)) {
+      return new Response(JSON.stringify({ error: 'Invalid month_year format (expected YYYY-MM)' }), { status: 400 });
+    }
+    const amount = parseAmount(total_amount);
+    if (amount === null || amount <= 0) {
+      return new Response(JSON.stringify({ error: 'Total amount must be a valid positive number' }), { status: 400 });
+    }
 
     await db
       .prepare(
@@ -52,7 +59,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
          VALUES (?, ?) 
          ON CONFLICT(month_year) DO UPDATE SET total_amount = excluded.total_amount`
       )
-      .bind(month_year, Number(total_amount))
+      .bind(month_year, amount)
       .run();
 
     return new Response(JSON.stringify({ success: true, month_year, total_amount }), { status: 200 });

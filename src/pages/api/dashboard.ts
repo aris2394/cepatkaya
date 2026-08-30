@@ -1,11 +1,11 @@
 import type { APIRoute } from 'astro';
 import type { CategoryStatus, DashboardSummary, Expense, Income } from '../../types';
 import { getDb } from '../../lib/db';
+import { requireUser, unauthorized } from '../../lib/auth';
 
 export const GET: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });

@@ -1,10 +1,11 @@
 import type { APIRoute } from 'astro';
 import { getDb } from '../../lib/db';
+import { requireUser, unauthorized } from '../../lib/auth';
+import { isValidMonth, parseAmount } from '../../lib/validate';
 
 export const GET: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
@@ -32,9 +33,8 @@ export const GET: APIRoute = async ({ request, locals, cookies }) => {
 };
 
 export const POST: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
@@ -47,6 +47,13 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
     if (!name || allocated_budget === undefined || !month_year) {
       return new Response(JSON.stringify({ error: 'Missing required category fields' }), { status: 400 });
     }
+    if (!isValidMonth(month_year)) {
+      return new Response(JSON.stringify({ error: 'Invalid month_year format (expected YYYY-MM)' }), { status: 400 });
+    }
+    const budget = parseAmount(allocated_budget);
+    if (budget === null) {
+      return new Response(JSON.stringify({ error: 'Allocated budget must be a valid number' }), { status: 400 });
+    }
 
     await db
       .prepare(
@@ -54,7 +61,7 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
          VALUES (?, ?, ?)
          ON CONFLICT(name, month_year) DO UPDATE SET allocated_budget = excluded.allocated_budget`
       )
-      .bind(name.trim(), Number(allocated_budget), month_year)
+      .bind(name.trim(), budget, month_year)
       .run();
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
@@ -64,9 +71,8 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
 };
 
 export const PUT: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
@@ -79,10 +85,14 @@ export const PUT: APIRoute = async ({ request, locals, cookies }) => {
     if (!id || !name || allocated_budget === undefined) {
       return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
     }
+    const budget = parseAmount(allocated_budget);
+    if (budget === null) {
+      return new Response(JSON.stringify({ error: 'Allocated budget must be a valid number' }), { status: 400 });
+    }
 
     await db
       .prepare('UPDATE categories SET name = ?, allocated_budget = ? WHERE id = ?')
-      .bind(name.trim(), Number(allocated_budget), Number(id))
+      .bind(name.trim(), budget, Number(id))
       .run();
 
     return new Response(JSON.stringify({ success: true }), { status: 200 });
@@ -92,9 +102,8 @@ export const PUT: APIRoute = async ({ request, locals, cookies }) => {
 };
 
 export const DELETE: APIRoute = async ({ request, locals, cookies }) => {
-  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
-    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
-  }
+  const user = await requireUser({ cookies, locals });
+  if (!user) return unauthorized();
   const db = await getDb(locals);
   if (!db) {
     return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
