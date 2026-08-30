@@ -4,6 +4,7 @@ import { ProgressRing } from './ui/ProgressRing';
 import { BudgetGauge, formatIDR } from './ui/BudgetGauge';
 import { IncomeModal } from './IncomeModal';
 import { CategoryModal } from './CategoryModal';
+import { TemplateManager } from './TemplateManager';
 import { ExpenseLogger } from './ExpenseLogger';
 import { ExpenseChart } from './ExpenseChart';
 
@@ -25,6 +26,7 @@ export const Dashboard = () => {
   const [isIncomeModalOpen, setIsIncomeModalOpen] = createSignal(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = createSignal(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = createSignal(false);
+  const [isTemplateManagerOpen, setIsTemplateManagerOpen] = createSignal(false);
   const [deletingId, setDeletingId] = createSignal<number | null>(null);
   const [editingCategory, setEditingCategory] = createSignal<any>(null);
   const [editingExpense, setEditingExpense] = createSignal<any>(null);
@@ -338,6 +340,12 @@ export const Dashboard = () => {
             >
               {loadingPresets() ? 'Loading…' : '✨ Load presets'}
             </button>
+            <button
+              onClick={() => setIsTemplateManagerOpen(true)}
+              class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95"
+            >
+              📋 Templates
+            </button>
           </div>
 
           <Show when={loading()}>
@@ -371,6 +379,12 @@ export const Dashboard = () => {
                       class="px-4 py-2 bg-white/5 text-white/60 rounded-xl text-xs font-bold border border-white/5 hover:bg-white/10 transition disabled:opacity-40"
                     >
                       {loadingPresets() ? 'Loading…' : '✨ Load 12 presets'}
+                    </button>
+                    <button
+                      onClick={() => setIsTemplateManagerOpen(true)}
+                      class="px-4 py-2 bg-white/5 text-white/60 rounded-xl text-xs font-bold border border-white/5 hover:bg-white/10 transition"
+                    >
+                      📋 Manage templates
                     </button>
                   </div>
                 </div>
@@ -527,6 +541,12 @@ export const Dashboard = () => {
         onSuccess={fetchData}
         currentMonth={selectedMonth()}
         editData={editingCategory()}
+      />
+      <TemplateManager
+        isOpen={isTemplateManagerOpen()}
+        onClose={() => setIsTemplateManagerOpen(false)}
+        onSuccess={fetchData}
+        currentMonth={selectedMonth()}
       />
       <ExpenseLogger
         isOpen={isExpenseModalOpen()}

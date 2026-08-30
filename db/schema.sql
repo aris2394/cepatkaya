@@ -32,6 +32,18 @@ CREATE INDEX IF NOT EXISTS idx_categories_month ON categories(month_year);
 CREATE INDEX IF NOT EXISTS idx_expenses_category ON expenses(category_id);
 CREATE INDEX IF NOT EXISTS idx_expenses_date ON expenses(date);
 
+-- Category templates: reusable preset categories the user can manage from the UI
+-- (previously hardcoded). Seeded from the default presets on first run.
+CREATE TABLE IF NOT EXISTS category_templates (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  allocated_budget REAL NOT NULL DEFAULT 0,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_templates_order ON category_templates(sort_order, id);
+
 -- Users table: application accounts (password stored as salt:pbkdf2-hash)
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
