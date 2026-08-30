@@ -1,10 +1,12 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, Show, createEffect } from 'solid-js';
 
 interface CategoryModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onSuccess: () => void;
   currentMonth: string;
+  editData?: { id: number; name: string; allocated_budget: number };
 }
 
 const PRESET_CATEGORIES = [
@@ -27,7 +29,18 @@ export const CategoryModal = (props: CategoryModalProps) => {
   const [budget, setBudget] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal('');
+  const [error, setError] = createSignal('');
   const [success, setSuccess] = createSignal(false);
+
+  createEffect(() => {
+    if (props.isOpen && props.editData) {
+      setName(props.editData.name);
+      setBudget(props.editData.allocated_budget.toString());
+    } else if (props.isOpen && !props.editData) {
+      setName('');
+      setBudget('');
+    }
+  });
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -38,10 +51,12 @@ export const CategoryModal = (props: CategoryModalProps) => {
     setLoading(true);
     setError('');
     try {
+      const isEdit = !!props.editData;
       const res = await fetch('/api/categories', {
-        method: 'POST',
+        method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: props.editData?.id,
           name: name(),
           allocated_budget: Number(budget()),
           month_year: props.currentMonth,
@@ -81,7 +96,7 @@ export const CategoryModal = (props: CategoryModalProps) => {
 
           <div class="flex items-center justify-between mb-5">
             <div>
-              <h3 class="text-lg font-black text-white">Add Budget Category</h3>
+              <h3 class="text-lg font-black text-white">{props.editData ? 'Edit Budget Category' : 'Add Budget Category'}</h3>
               <p class="text-xs text-white/35 mt-0.5">{props.currentMonth}</p>
             </div>
             <button
@@ -96,7 +111,7 @@ export const CategoryModal = (props: CategoryModalProps) => {
           <Show when={success()}>
             <div class="flex flex-col items-center justify-center py-8 animate-scale-in">
               <div class="text-5xl mb-3">✅</div>
-              <p class="text-white font-bold">Category created!</p>
+              <p class="text-white font-bold">{props.editData ? 'Category updated!' : 'Category created!'}</p>
             </div>
           </Show>
 
@@ -172,7 +187,7 @@ export const CategoryModal = (props: CategoryModalProps) => {
                   disabled={loading()}
                   class="flex-1 py-3.5 rounded-2xl bg-gradient-to-r from-indigo-500 to-violet-600 text-sm font-black text-white shadow-lg shadow-indigo-500/30 hover:from-indigo-400 hover:to-violet-500 disabled:opacity-40 transition-all active:scale-95"
                 >
-                  {loading() ? 'Saving...' : 'Add Category'}
+                  {loading() ? 'Saving...' : (props.editData ? 'Update Category' : 'Add Category')}
                 </button>
               </div>
             </form>

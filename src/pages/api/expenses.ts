@@ -71,6 +71,34 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   }
 };
 
+export const PUT: APIRoute = async ({ request, locals, cookies }) => {
+  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+  }
+  const db = await getDb(locals);
+  if (!db) {
+    return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
+  }
+
+  try {
+    const body = await request.json();
+    const { id, category_id, amount, date, note } = body;
+
+    if (!id || !category_id || amount === undefined || !date) {
+      return new Response(JSON.stringify({ error: 'Missing required expense fields' }), { status: 400 });
+    }
+
+    await db
+      .prepare('UPDATE expenses SET category_id = ?, amount = ?, date = ?, note = ? WHERE id = ?')
+      .bind(Number(category_id), Number(amount), date, note || '', Number(id))
+      .run();
+
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
+};
+
 export const DELETE: APIRoute = async ({ request, locals, cookies }) => {
   if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });

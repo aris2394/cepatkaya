@@ -25,7 +25,20 @@ export const Dashboard = () => {
   const [isIncomeModalOpen, setIsIncomeModalOpen] = createSignal(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = createSignal(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = createSignal(false);
+  const [isExpenseModalOpen, setIsExpenseModalOpen] = createSignal(false);
   const [deletingId, setDeletingId] = createSignal<number | null>(null);
+  const [editingCategory, setEditingCategory] = createSignal<any>(null);
+  const [editingExpense, setEditingExpense] = createSignal<any>(null);
+
+  const handleCloseCategoryModal = () => {
+    setIsCategoryModalOpen(false);
+    setTimeout(() => setEditingCategory(null), 300);
+  };
+
+  const handleCloseExpenseModal = () => {
+    setIsExpenseModalOpen(false);
+    setTimeout(() => setEditingExpense(null), 300);
+  };
 
   const fetchData = async () => {
     setLoading(true);
@@ -265,7 +278,7 @@ export const Dashboard = () => {
               <For each={data()?.categories}>
                 {(cat, i) => (
                   <div
-                    class="p-4 rounded-2xl bg-white/3 border border-white/5 space-y-2.5 hover:bg-white/5 transition-all animate-fade-up"
+                    class="group p-4 rounded-2xl bg-white/3 border border-white/5 space-y-2.5 hover:bg-white/5 transition-all animate-fade-up"
                     style={`animation-delay:${0.2 + i() * 0.06}s; opacity:0`}
                   >
                     <div class="flex items-center justify-between">
@@ -276,13 +289,22 @@ export const Dashboard = () => {
                             ? `Exceeded ${formatIDR(Math.abs(cat.remaining))}`
                             : `${formatIDR(cat.remaining)} left`}
                         </span>
-                        <button
-                          onClick={() => handleDeleteCategory(cat.id!)}
-                          class="w-6 h-6 flex items-center justify-center rounded-lg text-white/20 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-xs"
-                          title="Delete"
-                        >
-                          ✕
-                        </button>
+                        <div class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => { setEditingCategory(cat); setIsCategoryModalOpen(true); }}
+                            class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all text-sm"
+                            title="Edit"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCategory(cat.id!)}
+                            class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                            title="Delete"
+                          >
+                            🗑️
+                          </button>
+                        </div>
                       </div>
                     </div>
                     <BudgetGauge percentage={cat.percentage} spent={cat.spent} total={cat.allocated_budget} />
@@ -352,13 +374,22 @@ export const Dashboard = () => {
                     </div>
                     <div class="flex items-center gap-2">
                       <span class="font-black text-sm text-rose-400">-{formatIDR(exp.amount)}</span>
-                      <button
-                        onClick={() => handleDeleteExpense(exp.id!)}
-                        class="w-7 h-7 flex items-center justify-center rounded-xl text-white/15 hover:text-rose-400 hover:bg-rose-500/10 opacity-0 group-hover:opacity-100 transition-all text-xs"
-                        title="Delete"
-                      >
-                        ✕
-                      </button>
+                      <div class="flex items-center opacity-0 group-hover:opacity-100 transition-opacity gap-1">
+                        <button
+                          onClick={() => { setEditingExpense(exp); setIsExpenseModalOpen(true); }}
+                          class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-indigo-400 hover:bg-indigo-500/10 transition-all text-sm"
+                          title="Edit"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          onClick={() => handleDeleteExpense(exp.id!)}
+                          class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                          title="Delete"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -389,15 +420,17 @@ export const Dashboard = () => {
       />
       <CategoryModal
         isOpen={isCategoryModalOpen()}
-        onClose={() => setIsCategoryModalOpen(false)}
+        onClose={handleCloseCategoryModal}
         onSuccess={fetchData}
         currentMonth={selectedMonth()}
+        editData={editingCategory()}
       />
       <ExpenseLogger
         isOpen={isExpenseModalOpen()}
-        onClose={() => setIsExpenseModalOpen(false)}
+        onClose={handleCloseExpenseModal}
         onSuccess={fetchData}
         categories={data()?.categories || []}
+        editData={editingExpense()}
       />
     </div>
   );

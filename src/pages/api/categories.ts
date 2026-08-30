@@ -63,6 +63,34 @@ export const POST: APIRoute = async ({ request, locals, cookies }) => {
   }
 };
 
+export const PUT: APIRoute = async ({ request, locals, cookies }) => {
+  if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
+    return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });
+  }
+  const db = await getDb(locals);
+  if (!db) {
+    return new Response(JSON.stringify({ error: 'Database binding not found' }), { status: 500 });
+  }
+
+  try {
+    const body = await request.json();
+    const { id, name, allocated_budget } = body;
+
+    if (!id || !name || allocated_budget === undefined) {
+      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 });
+    }
+
+    await db
+      .prepare('UPDATE categories SET name = ?, allocated_budget = ? WHERE id = ?')
+      .bind(name.trim(), Number(allocated_budget), Number(id))
+      .run();
+
+    return new Response(JSON.stringify({ success: true }), { status: 200 });
+  } catch (error: any) {
+    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+  }
+};
+
 export const DELETE: APIRoute = async ({ request, locals, cookies }) => {
   if (cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401 });

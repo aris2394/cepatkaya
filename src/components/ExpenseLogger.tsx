@@ -1,11 +1,13 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, Show, createEffect } from 'solid-js';
 import type { Category } from '../types';
 
 interface ExpenseLoggerProps {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  onSuccess: () => void;
   categories: Category[];
+  editData?: { id: number; category_id: number; amount: number; date: string; note: string };
 }
 
 export const ExpenseLogger = (props: ExpenseLoggerProps) => {
@@ -16,7 +18,22 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
   const [note, setNote] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal('');
+  const [error, setError] = createSignal('');
   const [success, setSuccess] = createSignal(false);
+
+  createEffect(() => {
+    if (props.isOpen && props.editData) {
+      setCategoryId(props.editData.category_id.toString());
+      setAmount(props.editData.amount.toString());
+      setDate(props.editData.date);
+      setNote(props.editData.note || '');
+    } else if (props.isOpen && !props.editData) {
+      setCategoryId('');
+      setAmount('');
+      setDate(today);
+      setNote('');
+    }
+  });
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -27,10 +44,12 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
     setLoading(true);
     setError('');
     try {
+      const isEdit = !!props.editData;
       const res = await fetch('/api/expenses', {
-        method: 'POST',
+        method: isEdit ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          id: props.editData?.id,
           category_id: Number(categoryId()),
           amount: Number(amount()),
           date: date(),
@@ -75,7 +94,7 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
 
           <div class="flex items-center justify-between mb-5">
             <div>
-              <h3 class="text-lg font-black text-white">Log Expense</h3>
+              <h3 class="text-lg font-black text-white">{props.editData ? 'Edit Expense' : 'Log Expense'}</h3>
               <p class="text-xs text-white/35 mt-0.5">Track your daily spending</p>
             </div>
             <button
@@ -90,7 +109,7 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
           <Show when={success()}>
             <div class="flex flex-col items-center justify-center py-8 animate-scale-in">
               <div class="text-5xl mb-3">✅</div>
-              <p class="text-white font-bold">Expense recorded!</p>
+              <p class="text-white font-bold">{props.editData ? 'Expense updated!' : 'Expense recorded!'}</p>
             </div>
           </Show>
 
@@ -171,7 +190,7 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
                       <span class="w-4 h-4 border-2 border-white/30 border-t-white rounded-full inline-block" style="animation: spin 0.6s linear infinite" />
                       Saving...
                     </span>
-                  ) : 'Add Expense'}
+                  ) : (props.editData ? 'Update Expense' : 'Add Expense')}
                 </button>
               </div>
             </form>
