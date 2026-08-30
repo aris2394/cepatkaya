@@ -10,7 +10,7 @@ import { ExpenseLogger } from './ExpenseLogger';
 import { ExpenseChart } from './ExpenseChart';
 
 const SkeletonCard = () => (
-  <div class="glass-card rounded-3xl p-5 space-y-3">
+  <div class="theme-card rounded-3xl p-5 space-y-3">
     <div class="shimmer h-4 w-32 rounded-full" />
     <div class="shimmer h-8 w-48 rounded-full" />
     <div class="shimmer h-3 w-24 rounded-full" />
@@ -24,6 +24,8 @@ export const Dashboard = () => {
   );
   const [data, setData] = createSignal<DashboardSummary | null>(null);
   const [loading, setLoading] = createSignal(true);
+
+  // Modals state
   const [isIncomeModalOpen, setIsIncomeModalOpen] = createSignal(false);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = createSignal(false);
   const [isExpenseModalOpen, setIsExpenseModalOpen] = createSignal(false);
@@ -112,7 +114,7 @@ export const Dashboard = () => {
   fetchData();
 
   const handleDeleteExpense = async (id: number) => {
-    if (!confirm('Delete this expense?')) return;
+    if (!confirm('Apakah Anda yakin ingin menghapus transaksi ini?')) return;
     setDeletingId(id);
     try {
       await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' });
@@ -123,7 +125,7 @@ export const Dashboard = () => {
   };
 
   const handleDeleteCategory = async (id: number) => {
-    if (!confirm('Delete this category and all its expenses?')) return;
+    if (!confirm('Hapus kategori ini beserta seluruh pengeluarannya?')) return;
     try {
       await fetch(`/api/categories?id=${id}`, { method: 'DELETE' });
       fetchData();
@@ -142,7 +144,7 @@ export const Dashboard = () => {
   };
 
   const handleRollover = async () => {
-    if (!confirm('Copy categories & budgets from last month into this month?')) return;
+    if (!confirm('Salin kategori & anggaran dari bulan lalu ke bulan ini?')) return;
     setRolling(true);
     try {
       const res = await fetch('/api/categories/rollover', {
@@ -159,7 +161,7 @@ export const Dashboard = () => {
   };
 
   const handleLoadPresets = async () => {
-    if (!confirm('Load default preset categories for this month?')) return;
+    if (!confirm('Muat kategori preset default untuk bulan ini?')) return;
     setLoadingPresets(true);
     try {
       const res = await fetch('/api/categories/presets', {
@@ -176,7 +178,7 @@ export const Dashboard = () => {
   };
 
   const handleLogout = async () => {
-    if (!confirm('Log out?')) return;
+    if (!confirm('Keluar dari aplikasi?')) return;
     await fetch('/api/auth/logout', { method: 'POST' });
     window.location.href = '/login';
   };
@@ -211,14 +213,14 @@ export const Dashboard = () => {
 
   const healthStatus = () => {
     const d = data();
-    if (!d || d.total_allocated === 0) return { label: 'Siap Diatur ⚪', color: 'text-white/60 bg-white/5 border-white/10' };
-    if (d.total_spent > d.total_allocated) return { label: 'Over Budget 🔴', color: 'text-rose-400 bg-rose-500/10 border-rose-500/20' };
-    if (d.total_spent >= 0.8 * d.total_allocated) return { label: 'Waspada 🟡', color: 'text-amber-400 bg-amber-500/10 border-amber-500/20' };
-    return { label: 'Sehat 🟢', color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' };
+    if (!d || d.total_allocated === 0) return { label: 'Siap Diatur ⚪', color: 'text-slate-400 bg-slate-500/10 border-slate-500/20' };
+    if (d.total_spent > d.total_allocated) return { label: 'Over Budget 🔴', color: 'text-rose-500 bg-rose-500/10 border-rose-500/20' };
+    if (d.total_spent >= 0.8 * d.total_allocated) return { label: 'Waspada 🟡', color: 'text-amber-500 bg-amber-500/10 border-amber-500/20' };
+    return { label: 'Sehat 🟢', color: 'text-emerald-500 bg-emerald-500/10 border-emerald-500/20' };
   };
 
   return (
-    <div class="max-w-md mx-auto min-h-screen bg-[#0f1117] pb-28 relative overflow-x-hidden transition-colors duration-300">
+    <div class="max-w-md mx-auto min-h-screen theme-bg pb-36 relative overflow-x-hidden transition-colors duration-300">
       {/* Background ambient glow */}
       <div class="fixed inset-0 pointer-events-none overflow-hidden">
         <div class="absolute -top-40 -left-20 w-72 h-72 bg-rose-600/10 rounded-full blur-3xl" />
@@ -226,58 +228,64 @@ export const Dashboard = () => {
         <div class="absolute bottom-40 left-10 w-48 h-48 bg-cyan-600/6 rounded-full blur-3xl" />
       </div>
 
-      {/* ── Header ── */}
-      <header class="relative px-5 pt-12 pb-16">
-        <div class="flex items-center justify-between gap-2 mb-8">
-          <div class="flex items-center gap-3">
-            <img src="/logo.png" alt="CepatKaya Logo" class="w-11 h-11 object-contain drop-shadow-[0_4px_8px_rgba(244,63,94,0.3)]" />
-            <div>
-              <h1 class="text-base font-black tracking-tight text-white leading-none">CepatKaya</h1>
-              <p class="text-[11px] text-white/40 font-medium mt-0.5">Family Financial Monitor</p>
+      {/* ── Header Section ── */}
+      <header class="relative px-5 pt-8 pb-4 space-y-4">
+        {/* Top bar: Brand + Controls */}
+        <div class="flex items-center justify-between gap-3">
+          <div class="flex items-center gap-3 min-w-0">
+            <img src="/logo.png" alt="CepatKaya Logo" class="w-10 h-10 object-contain drop-shadow-[0_4px_8px_rgba(244,63,94,0.3)] shrink-0" />
+            <div class="min-w-0">
+              <h1 class="text-base font-black tracking-tight theme-text-primary leading-tight truncate">CepatKaya</h1>
+              <p class="text-[11px] theme-text-muted font-medium truncate">Family Financial Monitor</p>
             </div>
           </div>
-          <div class="flex items-center gap-2">
+
+          <div class="flex items-center gap-1.5 shrink-0">
             <button
               onClick={toggleTheme}
-              title={theme() === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
-              class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-white/70 hover:text-white hover:bg-white/10 border border-white/5 transition-all active:scale-95 text-sm"
+              title={theme() === 'dark' ? 'Ganti ke Mode Terang' : 'Ganti ke Mode Gelap'}
+              class="w-9 h-9 flex items-center justify-center rounded-xl theme-card-item theme-text-primary hover:scale-105 transition-all text-sm"
             >
               {theme() === 'dark' ? '☀️' : '🌙'}
             </button>
             <button
               onClick={() => setIsUserManagerOpen(true)}
               title="Kelola Akun Admin"
-              class="px-2.5 py-1.5 flex items-center gap-1 rounded-xl bg-white/5 text-white/70 hover:text-white hover:bg-white/10 border border-white/5 transition-all active:scale-95 text-xs font-semibold"
+              class="px-2.5 py-1.5 flex items-center gap-1 rounded-xl theme-card-item theme-text-primary hover:scale-105 transition-all text-xs font-semibold"
             >
               <span>👤</span>
-              <span class="hidden sm:inline">Kelola Akun</span>
+              <span class="hidden sm:inline">Akun</span>
             </button>
             <button
               onClick={handleLogout}
-              title="Log out"
-              class="w-9 h-9 flex items-center justify-center rounded-xl bg-white/5 text-white/50 hover:text-rose-400 hover:bg-rose-500/10 border border-white/5 transition-all active:scale-95 text-sm"
+              title="Keluar"
+              class="w-9 h-9 flex items-center justify-center rounded-xl theme-card-item text-rose-500 hover:bg-rose-500/10 transition-all text-sm"
             >
               ⎋
             </button>
-            <input
-              type="month"
-              value={selectedMonth()}
-              onChange={(e) => handleMonthChange(e.currentTarget.value)}
-              class="glass px-3 py-1.5 rounded-xl text-xs font-semibold text-white/80 focus:outline-none focus:ring-1 focus:ring-rose-500/50 cursor-pointer transition hover:bg-white/10"
-            />
           </div>
         </div>
 
-        {/* Income Banner */}
-        <div
-          class="glass rounded-2xl p-4 flex items-center justify-between card-lift animate-fade-up"
-          style="animation-delay: 0.05s; opacity: 0;"
-        >
+        {/* Month Picker Row */}
+        <div class="flex items-center justify-between gap-2 p-2.5 rounded-2xl theme-card">
+          <span class="text-xs font-bold theme-text-secondary flex items-center gap-1.5 pl-1">
+            <span>📅</span> Bulan Anggaran:
+          </span>
+          <input
+            type="month"
+            value={selectedMonth()}
+            onChange={(e) => handleMonthChange(e.currentTarget.value)}
+            class="px-3 py-1.5 rounded-xl text-xs font-bold theme-input focus:outline-none focus:ring-2 focus:ring-rose-500/50 cursor-pointer transition"
+          />
+        </div>
+
+        {/* Monthly Income Banner */}
+        <div class="theme-card rounded-2xl p-4 flex items-center justify-between animate-fade-up">
           <div>
-            <div class="text-[10px] font-semibold text-white/40 uppercase tracking-widest mb-1">Monthly Income</div>
-            <div class="text-2xl font-black text-white animate-number" style="animation-delay:0.1s">
+            <div class="text-[10px] font-bold theme-text-muted uppercase tracking-widest mb-1">Monthly Income</div>
+            <div class="text-2xl font-black theme-text-primary animate-number">
               {loading() ? (
-                <div class="shimmer h-7 w-40 rounded-lg" />
+                <div class="shimmer h-7 w-36 rounded-lg" />
               ) : (
                 formatIDR(data()?.total_income || 0)
               )}
@@ -285,49 +293,49 @@ export const Dashboard = () => {
           </div>
           <button
             onClick={() => setIsIncomeModalOpen(true)}
-            class="px-3.5 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-xs font-bold rounded-xl shadow-lg shadow-rose-500/30 active:scale-95 transition-all hover:shadow-rose-500/50 hover:scale-105"
+            class="px-3.5 py-2 bg-gradient-to-r from-rose-500 to-pink-600 text-white text-xs font-extrabold rounded-xl shadow-md shadow-rose-500/25 active:scale-95 transition-all hover:scale-105"
           >
             Set Income
           </button>
         </div>
       </header>
 
-      {/* ── Budget alerts ── */}
+      {/* ── Budget Alerts ── */}
       <Show when={!loading() && (overBudgetCats().length > 0 || warningCats().length > 0)}>
-        <div class="px-4 -mt-2 mb-1 space-y-2">
+        <div class="px-5 mb-4 space-y-2">
           <Show when={overBudgetCats().length > 0}>
-            <div class="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-300 text-xs font-semibold flex items-start gap-2">
-              <span class="text-sm leading-none mt-0.5">🔴</span>
-              <span><b>{overBudgetCats().length}</b> category over budget: {overBudgetCats().map((c) => c.name).join(', ')}</span>
+            <div class="p-3.5 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-500 text-xs font-semibold flex items-start gap-2.5">
+              <span class="text-base leading-none mt-0.5">🔴</span>
+              <span><b>{overBudgetCats().length}</b> kategori melebihi anggaran: {overBudgetCats().map((c) => c.name).join(', ')}</span>
             </div>
           </Show>
           <Show when={warningCats().length > 0}>
-            <div class="p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-300 text-xs font-semibold flex items-start gap-2">
-              <span class="text-sm leading-none mt-0.5">🟡</span>
-              <span><b>{warningCats().length}</b> category near limit (&gt;80%): {warningCats().map((c) => c.name).join(', ')}</span>
+            <div class="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-500 text-xs font-semibold flex items-start gap-2.5">
+              <span class="text-base leading-none mt-0.5">🟡</span>
+              <span><b>{warningCats().length}</b> kategori mendekati batas (&gt;80%): {warningCats().map((c) => c.name).join(', ')}</span>
             </div>
           </Show>
         </div>
       </Show>
 
-      {/* ── Main ── */}
-      <main class="px-4 -mt-6 space-y-4">
+      {/* ── Main Dashboard Content ── */}
+      <main class="px-5 space-y-4">
 
-        {/* Overview Card */}
-        <div class="glass-card rounded-3xl p-5 animate-fade-up card-lift" style="animation-delay:0.1s; opacity:0">
+        {/* 1. Overview Card */}
+        <div class="theme-card rounded-3xl p-5 animate-fade-up">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h2 class="text-sm font-bold text-white">Budget Overview</h2>
-              <p class="text-[11px] text-white/40">{selectedMonth()}</p>
+              <h2 class="text-sm font-bold theme-text-primary">Budget Overview</h2>
+              <p class="text-[11px] theme-text-muted">{selectedMonth()}</p>
             </div>
             <Show when={!loading() && data()}>
               <div class="flex items-center gap-2">
-                <span class={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${healthStatus().color}`}>
+                <span class={`px-2.5 py-1 rounded-full text-[10px] font-extrabold border ${healthStatus().color}`}>
                   {healthStatus().label}
                 </span>
                 <div class="text-right">
-                  <div class="text-[10px] text-white/40 uppercase tracking-wider">Savings Rate</div>
-                  <div class={`text-sm font-black ${savingsRate() > 20 ? 'text-emerald-400' : 'text-amber-400'}`}>
+                  <div class="text-[10px] theme-text-muted uppercase tracking-wider">Savings Rate</div>
+                  <div class={`text-sm font-black ${savingsRate() > 20 ? 'text-emerald-500' : 'text-amber-500'}`}>
                     {savingsRate().toFixed(0)}%
                   </div>
                 </div>
@@ -346,12 +354,12 @@ export const Dashboard = () => {
               <ProgressRing percentage={overallSpentPercentage()} label="Spent" />
               <div class="space-y-4">
                 {[
-                  { label: 'Allocated', value: data()?.total_allocated || 0, color: 'text-white' },
-                  { label: 'Spent', value: data()?.total_spent || 0, color: 'text-rose-400' },
-                  { label: 'Remaining', value: data()?.total_remaining_budget || 0, color: (data()?.total_remaining_budget || 0) < 0 ? 'text-rose-400' : 'text-emerald-400' },
+                  { label: 'Allocated', value: data()?.total_allocated || 0, color: 'theme-text-primary' },
+                  { label: 'Spent', value: data()?.total_spent || 0, color: 'text-rose-500' },
+                  { label: 'Remaining', value: data()?.total_remaining_budget || 0, color: (data()?.total_remaining_budget || 0) < 0 ? 'text-rose-500' : 'text-emerald-500' },
                 ].map((item, i) => (
-                  <div class={`animate-fade-up delay-${(i + 2) * 50}`} style={`animation-delay:${(i + 2) * 0.08}s; opacity:0`}>
-                    <span class="text-[10px] font-semibold text-white/35 uppercase tracking-widest block mb-0.5">{item.label}</span>
+                  <div class="animate-fade-up">
+                    <span class="text-[10px] font-semibold theme-text-muted uppercase tracking-widest block mb-0.5">{item.label}</span>
                     <span class={`text-sm font-black ${item.color}`}>{formatIDR(item.value)}</span>
                   </div>
                 ))}
@@ -361,16 +369,16 @@ export const Dashboard = () => {
 
           {/* Financial Cashflow Summary Grid */}
           <Show when={!loading() && data()}>
-            <div class="mt-4 pt-4 border-t border-white/8 grid grid-cols-2 gap-3">
-              <div class="p-3 rounded-2xl bg-white/3 border border-white/5">
-                <span class="text-[10px] font-semibold text-white/35 uppercase tracking-wider block mb-1">Net Cashflow</span>
-                <span class={`text-sm font-extrabold ${netCashflow() >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+            <div class="mt-4 pt-4 border-t theme-card-item border-x-0 border-b-0 border-t-1 grid grid-cols-2 gap-3">
+              <div class="p-3 rounded-2xl theme-card-item">
+                <span class="text-[10px] font-semibold theme-text-muted uppercase tracking-wider block mb-1">Net Cashflow</span>
+                <span class={`text-sm font-black ${netCashflow() >= 0 ? 'text-emerald-500' : 'text-rose-500'}`}>
                   {netCashflow() >= 0 ? '+' : ''}{formatIDR(netCashflow())}
                 </span>
               </div>
-              <div class="p-3 rounded-2xl bg-white/3 border border-white/5">
-                <span class="text-[10px] font-semibold text-white/35 uppercase tracking-wider block mb-1">Pengeluaran Terbesar</span>
-                <span class="text-xs font-bold text-white truncate block">
+              <div class="p-3 rounded-2xl theme-card-item">
+                <span class="text-[10px] font-semibold theme-text-muted uppercase tracking-wider block mb-1">Top Expense</span>
+                <span class="text-xs font-bold theme-text-primary truncate block">
                   {topSpendingCat() ? `${topSpendingCat()?.name}` : 'Belum Ada'}
                 </span>
               </div>
@@ -379,14 +387,14 @@ export const Dashboard = () => {
 
           {/* Unallocated warning */}
           <Show when={!loading() && data() && data()!.remaining_unallocated > 0}>
-            <div class="mt-3 p-3 rounded-2xl bg-amber-500/8 border border-amber-500/15 flex items-center justify-between animate-fade-up">
-              <div class="flex items-center gap-2 text-xs text-amber-400">
+            <div class="mt-3 p-3 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-between animate-fade-up">
+              <div class="flex items-center gap-2 text-xs text-amber-500">
                 <span class="text-base">⚠️</span>
                 <span>Unallocated: <b>{formatIDR(data()!.remaining_unallocated)}</b></span>
               </div>
               <button
                 onClick={() => setIsCategoryModalOpen(true)}
-                class="text-amber-400 font-bold text-[11px] underline underline-offset-2 hover:text-amber-300 transition"
+                class="text-amber-500 font-bold text-[11px] underline underline-offset-2 hover:text-amber-600 transition"
               >
                 Allocate →
               </button>
@@ -394,12 +402,12 @@ export const Dashboard = () => {
           </Show>
         </div>
 
-        {/* Analytics Card */}
-        <div class="glass-card rounded-3xl p-5 animate-fade-up card-lift" style="animation-delay:0.14s; opacity:0">
+        {/* 2. Expense Analytics Card */}
+        <div class="theme-card rounded-3xl p-5 animate-fade-up">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h2 class="text-sm font-bold text-white">Expense Analytics</h2>
-              <p class="text-[11px] text-white/35">Where your money goes</p>
+              <h2 class="text-sm font-bold theme-text-primary">Expense Analytics</h2>
+              <p class="text-[11px] theme-text-muted">Where your money goes</p>
             </div>
           </div>
           
@@ -416,23 +424,23 @@ export const Dashboard = () => {
           </Show>
         </div>
 
-        {/* Categories Card (Collapsible) */}
-        <div class="glass-card rounded-3xl p-5 animate-fade-up card-lift" style="animation-delay:0.18s; opacity:0">
+        {/* 3. Category Budgets Card (Collapsible) */}
+        <div class="theme-card rounded-3xl p-5 animate-fade-up">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h2 class="text-sm font-bold text-white">Category Budgets</h2>
-              <p class="text-[11px] text-white/35">Real-time spending limits</p>
+              <h2 class="text-sm font-bold theme-text-primary">Category Budgets</h2>
+              <p class="text-[11px] theme-text-muted">Real-time spending limits</p>
             </div>
             <div class="flex items-center gap-2">
               <button
                 onClick={toggleCategoriesCollapse}
-                class="px-2.5 py-1 text-[11px] font-bold text-white/50 hover:text-white bg-white/5 rounded-lg border border-white/5 transition active:scale-95"
+                class="px-2.5 py-1 text-[11px] font-bold theme-card-item theme-text-secondary rounded-lg transition active:scale-95"
               >
                 {isCategoriesCollapsed() ? '▼ Tampilkan' : '▲ Sembunyikan'}
               </button>
               <button
                 onClick={() => setIsCategoryModalOpen(true)}
-                class="flex items-center gap-1 px-3 py-1.5 bg-rose-500/10 text-rose-400 hover:bg-rose-500/20 rounded-xl text-xs font-bold border border-rose-500/20 transition-all active:scale-95"
+                class="flex items-center gap-1 px-3 py-1.5 bg-rose-500/10 text-rose-500 hover:bg-rose-500/20 rounded-xl text-xs font-bold border border-rose-500/20 transition-all active:scale-95"
               >
                 <span class="text-sm leading-none">+</span> Add
               </button>
@@ -444,20 +452,20 @@ export const Dashboard = () => {
               <button
                 onClick={handleRollover}
                 disabled={rolling()}
-                class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95 disabled:opacity-40"
+                class="flex items-center gap-1 px-3 py-1.5 theme-card-item theme-text-secondary hover:theme-text-primary rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-40"
               >
                 {rolling() ? 'Copying…' : '↻ Copy last month'}
               </button>
               <button
                 onClick={handleLoadPresets}
                 disabled={loadingPresets()}
-                class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95 disabled:opacity-40"
+                class="flex items-center gap-1 px-3 py-1.5 theme-card-item theme-text-secondary hover:theme-text-primary rounded-xl text-xs font-bold transition-all active:scale-95 disabled:opacity-40"
               >
                 {loadingPresets() ? 'Loading…' : '✨ Load presets'}
               </button>
               <button
                 onClick={() => setIsTemplateManagerOpen(true)}
-                class="flex items-center gap-1 px-3 py-1.5 bg-white/5 text-white/60 hover:bg-white/10 rounded-xl text-xs font-bold border border-white/5 transition-all active:scale-95"
+                class="flex items-center gap-1 px-3 py-1.5 theme-card-item theme-text-secondary hover:theme-text-primary rounded-xl text-xs font-bold transition-all active:scale-95"
               >
                 📋 Templates
               </button>
@@ -480,43 +488,34 @@ export const Dashboard = () => {
                 <Show when={!loading()}>
                   <div class="text-center py-8">
                     <div class="text-3xl mb-2">📂</div>
-                    <p class="text-white/30 text-xs">No budget categories yet</p>
+                    <p class="theme-text-muted text-xs">Belum ada kategori anggaran</p>
                     <div class="flex flex-col items-center gap-2 mt-3">
                       <button
                         onClick={() => setIsCategoryModalOpen(true)}
-                        class="px-4 py-2 bg-rose-500/10 text-rose-400 rounded-xl text-xs font-bold border border-rose-500/20 hover:bg-rose-500/20 transition"
+                        class="px-4 py-2 bg-rose-500/10 text-rose-500 rounded-xl text-xs font-bold border border-rose-500/20 hover:bg-rose-500/20 transition"
                       >
-                        Create your first category
+                        Buat Kategori Pertama
                       </button>
                       <button
                         onClick={handleLoadPresets}
                         disabled={loadingPresets()}
-                        class="px-4 py-2 bg-white/5 text-white/60 rounded-xl text-xs font-bold border border-white/5 hover:bg-white/10 transition disabled:opacity-40"
+                        class="px-4 py-2 theme-card-item theme-text-secondary rounded-xl text-xs font-bold hover:theme-text-primary transition disabled:opacity-40"
                       >
-                        {loadingPresets() ? 'Loading…' : '✨ Load presets'}
-                      </button>
-                      <button
-                        onClick={() => setIsTemplateManagerOpen(true)}
-                        class="px-4 py-2 bg-white/5 text-white/60 rounded-xl text-xs font-bold border border-white/5 hover:bg-white/10 transition"
-                      >
-                        📋 Manage templates
+                        {loadingPresets() ? 'Loading…' : '✨ Muat Presets'}
                       </button>
                     </div>
                   </div>
                 </Show>
               }
             >
-              <div class="space-y-4">
+              <div class="space-y-3">
                 <For each={data()?.categories}>
                   {(cat, i) => (
-                    <div
-                      class="group p-4 rounded-2xl bg-white/3 border border-white/5 space-y-2.5 hover:bg-white/5 transition-all animate-fade-up"
-                      style={`animation-delay:${0.2 + i() * 0.06}s; opacity:0`}
-                    >
+                    <div class="group p-4 rounded-2xl theme-card-item space-y-2.5 hover:scale-[1.01] transition-all animate-fade-up">
                       <div class="flex items-center justify-between gap-2">
-                        <span class="font-bold text-white text-sm truncate flex-1">{cat.name}</span>
+                        <span class="font-bold theme-text-primary text-sm truncate flex-1">{cat.name}</span>
                         <div class="flex items-center gap-2 shrink-0">
-                          <span class={`text-xs font-bold whitespace-nowrap ${cat.remaining < 0 ? 'text-rose-400' : 'text-white/50'}`}>
+                          <span class={`text-xs font-bold whitespace-nowrap ${cat.remaining < 0 ? 'text-rose-500' : 'theme-text-muted'}`}>
                             {cat.remaining < 0
                               ? `Exceeded ${formatIDR(Math.abs(cat.remaining))}`
                               : `${formatIDR(cat.remaining)} left`}
@@ -524,14 +523,14 @@ export const Dashboard = () => {
                           <div class="flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => { setEditingCategory(cat); setIsCategoryModalOpen(true); }}
-                              class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                              class="w-7 h-7 flex items-center justify-center rounded-lg theme-text-muted hover:text-rose-500 hover:bg-rose-500/10 transition-all text-sm"
                               title="Edit"
                             >
                               ✏️
                             </button>
                             <button
                               onClick={() => handleDeleteCategory(cat.id!)}
-                              class="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                              class="w-7 h-7 flex items-center justify-center rounded-lg theme-text-muted hover:text-rose-500 hover:bg-rose-500/10 transition-all text-sm"
                               title="Delete"
                             >
                               🗑️
@@ -548,21 +547,21 @@ export const Dashboard = () => {
           </Show>
         </div>
 
-        {/* Recent Expenses Card (Collapsible) */}
-        <div class="glass-card rounded-3xl p-5 animate-fade-up card-lift" style="animation-delay:0.26s; opacity:0">
+        {/* 4. Recent Expenses Card (Collapsible) */}
+        <div class="theme-card rounded-3xl p-5 animate-fade-up">
           <div class="flex items-center justify-between mb-4">
             <div>
-              <h2 class="text-sm font-bold text-white">Recent Expenses</h2>
-              <p class="text-[11px] text-white/35">Latest transactions</p>
+              <h2 class="text-sm font-bold theme-text-primary">Recent Expenses</h2>
+              <p class="text-[11px] theme-text-muted">Latest transactions</p>
             </div>
             <div class="flex items-center gap-2">
               <button
                 onClick={toggleExpensesCollapse}
-                class="px-2.5 py-1 text-[11px] font-bold text-white/50 hover:text-white bg-white/5 rounded-lg border border-white/5 transition active:scale-95"
+                class="px-2.5 py-1 text-[11px] font-bold theme-card-item theme-text-secondary rounded-lg transition active:scale-95"
               >
                 {isExpensesCollapsed() ? '▼ Tampilkan' : '▲ Sembunyikan'}
               </button>
-              <span class="px-2.5 py-1 bg-white/5 text-white/40 rounded-lg text-[10px] font-semibold border border-white/5">
+              <span class="px-2.5 py-1 theme-card-item theme-text-muted rounded-lg text-[10px] font-semibold">
                 {data()?.recent_expenses?.length || 0} records
               </span>
             </div>
@@ -589,50 +588,47 @@ export const Dashboard = () => {
                 <Show when={!loading()}>
                   <div class="text-center py-8">
                     <div class="text-3xl mb-2">💸</div>
-                    <p class="text-white/30 text-xs">No expenses logged yet</p>
+                    <p class="theme-text-muted text-xs">Belum ada pengeluaran dicatat</p>
                   </div>
                 </Show>
               }
             >
-              <div class="divide-y divide-white/4">
+              <div class="divide-y divide-gray-500/10">
                 <For each={data()?.recent_expenses}>
                   {(exp, i) => (
-                    <div
-                      class={`py-3.5 flex items-center justify-between gap-2 group animate-fade-up transition-opacity ${deletingId() === exp.id ? 'opacity-30' : ''}`}
-                      style={`animation-delay:${0.28 + i() * 0.04}s; opacity:0`}
-                    >
+                    <div class={`py-3.5 flex items-center justify-between gap-2 group animate-fade-up transition-opacity ${deletingId() === exp.id ? 'opacity-30' : ''}`}>
                       <div class="flex items-center gap-3 flex-1 min-w-0">
                         {/* Category icon */}
                         <div class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/15 flex items-center justify-center text-base flex-shrink-0">
                           💳
                         </div>
                         <div class="min-w-0 flex-1">
-                          <div class="font-semibold text-white text-sm leading-tight truncate">{exp.category_name}</div>
-                          <div class="text-[11px] text-white/35 mt-1 flex items-center gap-1.5 flex-wrap">
+                          <div class="font-semibold theme-text-primary text-sm leading-tight truncate">{exp.category_name}</div>
+                          <div class="text-[11px] theme-text-muted mt-1 flex items-center gap-1.5 flex-wrap">
                             <span class="whitespace-nowrap">{exp.date}</span>
                             {exp.created_by_name && (
                               <>
-                                <span class="text-white/20 shrink-0">•</span>
-                                <span class="text-[10px] font-semibold text-rose-300/80 bg-rose-500/10 px-1.5 py-0.5 rounded-md">by {exp.created_by_name}</span>
+                                <span class="theme-text-muted opacity-40 shrink-0">•</span>
+                                <span class="text-[10px] font-bold text-rose-500 bg-rose-500/10 px-1.5 py-0.5 rounded-md">by {exp.created_by_name}</span>
                               </>
                             )}
-                            {exp.note && <><span class="text-white/20 shrink-0">•</span><span class="truncate">{exp.note}</span></>}
+                            {exp.note && <><span class="theme-text-muted opacity-40 shrink-0">•</span><span class="truncate">{exp.note}</span></>}
                           </div>
                         </div>
                       </div>
                       <div class="flex items-center gap-1.5 shrink-0">
-                        <span class="font-black text-sm text-rose-400 whitespace-nowrap">-{formatIDR(exp.amount)}</span>
+                        <span class="font-black text-sm text-rose-500 whitespace-nowrap">-{formatIDR(exp.amount)}</span>
                         <div class="flex items-center opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity gap-1">
                           <button
                             onClick={() => { setEditingExpense(exp); setIsExpenseModalOpen(true); }}
-                            class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                            class="w-7 h-7 flex items-center justify-center rounded-xl theme-text-muted hover:text-rose-500 hover:bg-rose-500/10 transition-all text-sm"
                             title="Edit"
                           >
                             ✏️
                           </button>
                           <button
                             onClick={() => handleDeleteExpense(exp.id!)}
-                            class="w-7 h-7 flex items-center justify-center rounded-xl text-white/30 hover:text-rose-400 hover:bg-rose-500/10 transition-all text-sm"
+                            class="w-7 h-7 flex items-center justify-center rounded-xl theme-text-muted hover:text-rose-500 hover:bg-rose-500/10 transition-all text-sm"
                             title="Delete"
                           >
                             🗑️
@@ -649,7 +645,7 @@ export const Dashboard = () => {
       </main>
 
       {/* ── Floating Action Button ── */}
-      <div class="fixed bottom-0 inset-x-0 max-w-md mx-auto px-4 pb-6 pt-8 bg-gradient-to-t from-[#0f1117] via-[#0f1117]/90 to-transparent pointer-events-none z-40">
+      <div class="fixed bottom-0 inset-x-0 max-w-md mx-auto px-4 pb-6 pt-6 bg-gradient-to-t from-[#0f1117] via-[#0f1117]/90 to-transparent dark:from-[#0f1117] pointer-events-none z-40">
         <button
           onClick={() => setIsExpenseModalOpen(true)}
           class="w-full pointer-events-auto py-4 bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-400 hover:to-pink-500 active:scale-[0.97] text-white font-black rounded-2xl shadow-2xl shadow-rose-500/40 flex items-center justify-center gap-2.5 text-sm transition-all duration-200 hover:shadow-rose-500/60"

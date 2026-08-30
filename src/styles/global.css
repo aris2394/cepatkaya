@@ -1,27 +1,92 @@
 @import "tailwindcss";
 
+:root {
+  --bg-app: #0f1117;
+  --bg-card: rgba(22, 25, 33, 0.85);
+  --bg-card-hover: rgba(30, 34, 45, 0.95);
+  --bg-glass: rgba(255, 255, 255, 0.05);
+  --bg-item: rgba(255, 255, 255, 0.04);
+
+  --border-card: rgba(255, 255, 255, 0.08);
+  --border-item: rgba(255, 255, 255, 0.06);
+
+  --text-primary: #ffffff;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+
+  --input-bg: #0a0c10;
+  --input-text: #ffffff;
+  --input-border: rgba(255, 255, 255, 0.12);
+
+  --shadow-card: 0 10px 30px -5px rgba(0, 0, 0, 0.4);
+}
+
+html.light-mode {
+  --bg-app: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f1f5f9;
+  --bg-glass: rgba(255, 255, 255, 0.9);
+  --bg-item: #f8fafc;
+
+  --border-card: #e2e8f0;
+  --border-item: #cbd5e1;
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+
+  --input-bg: #ffffff;
+  --input-text: #0f172a;
+  --input-border: #cbd5e1;
+
+  --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+}
+
 @layer base {
   body {
-    @apply bg-[#0f1117] text-white antialiased font-sans transition-colors duration-300;
+    background-color: var(--bg-app);
+    color: var(--text-primary);
+    @apply antialiased font-sans transition-colors duration-300;
     -webkit-tap-highlight-color: transparent;
   }
 }
 
+.theme-bg {
+  background-color: var(--bg-app);
+}
+
+.theme-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-card);
+  box-shadow: var(--shadow-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.theme-card-item {
+  background-color: var(--bg-item);
+  border: 1px solid var(--border-item);
+}
+
+.theme-input {
+  background-color: var(--input-bg);
+  color: var(--input-text);
+  border: 1px solid var(--input-border);
+}
+
+.theme-text-primary {
+  color: var(--text-primary);
+}
+
+.theme-text-secondary {
+  color: var(--text-secondary);
+}
+
+.theme-text-muted {
+  color: var(--text-muted);
+}
+
 @layer utilities {
-  .glass {
-    background: rgba(255, 255, 255, 0.05);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-  }
-
-  .glass-card {
-    background: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(255, 255, 255, 0.07);
-  }
-
   .glow-blue { box-shadow: 0 0 40px rgba(99, 102, 241, 0.2), 0 8px 32px rgba(0,0,0,0.4); }
   .glow-green { box-shadow: 0 0 40px rgba(16, 185, 129, 0.2), 0 8px 32px rgba(0,0,0,0.4); }
   .glow-red { box-shadow: 0 0 40px rgba(239, 68, 68, 0.2), 0 8px 32px rgba(0,0,0,0.4); }
@@ -34,71 +99,10 @@
   }
 
   .shimmer {
-    background: linear-gradient(90deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.08) 50%, rgba(255,255,255,0.03) 100%);
+    background: linear-gradient(90deg, rgba(128,128,128,0.06) 0%, rgba(128,128,128,0.15) 50%, rgba(128,128,128,0.06) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.6s infinite;
   }
-}
-
-/* Light Theme overrides */
-html.light-mode body {
-  background-color: #f8fafc;
-  color: #0f172a;
-}
-
-html.light-mode .glass {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
-}
-
-html.light-mode .glass-card {
-  background: #ffffff;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
-  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.05);
-}
-
-html.light-mode .text-white {
-  color: #0f172a !important;
-}
-
-html.light-mode .text-white\/40,
-html.light-mode .text-white\/35 {
-  color: #64748b !important;
-}
-
-html.light-mode .text-white\/30,
-html.light-mode .text-white\/25,
-html.light-mode .text-white\/20,
-html.light-mode .text-white\/15 {
-  color: #94a3b8 !important;
-}
-
-html.light-mode .text-white\/60,
-html.light-mode .text-white\/70,
-html.light-mode .text-white\/80 {
-  color: #334155 !important;
-}
-
-html.light-mode .bg-white\/5,
-html.light-mode .bg-white\/3 {
-  background-color: rgba(0, 0, 0, 0.04) !important;
-}
-
-html.light-mode .border-white\/5,
-html.light-mode .border-white\/8,
-html.light-mode .border-white\/4 {
-  border-color: rgba(0, 0, 0, 0.08) !important;
-}
-
-html.light-mode .shimmer {
-  background: linear-gradient(90deg, rgba(0,0,0,0.04) 0%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 100%);
-  background-size: 200% 100%;
-  animation: shimmer 1.6s infinite;
 }
 
 @keyframes shimmer {
@@ -107,7 +111,7 @@ html.light-mode .shimmer {
 }
 
 @keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(20px); }
+  from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
@@ -122,7 +126,7 @@ html.light-mode .shimmer {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.9); }
+  from { opacity: 0; transform: scale(0.95); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -131,16 +135,16 @@ html.light-mode .shimmer {
 }
 
 @keyframes numberPop {
-  0% { opacity: 0; transform: translateY(6px) scale(0.96); }
+  0% { opacity: 0; transform: translateY(4px) scale(0.97); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.animate-fade-up { animation: fadeSlideUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.animate-sheet-in { animation: sheetIn 0.4s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
-.animate-backdrop-in { animation: backdropIn 0.25s ease both; }
-.animate-scale-in { animation: scaleIn 0.3s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
-.animate-number { animation: numberPop 0.5s cubic-bezier(0.22, 1, 0.36, 1) both; }
-.animate-ring { animation: ringFill 1s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-fade-up { animation: fadeSlideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-sheet-in { animation: sheetIn 0.35s cubic-bezier(0.34, 1.2, 0.64, 1) both; }
+.animate-backdrop-in { animation: backdropIn 0.2s ease both; }
+.animate-scale-in { animation: scaleIn 0.25s cubic-bezier(0.34, 1.4, 0.64, 1) both; }
+.animate-number { animation: numberPop 0.4s cubic-bezier(0.22, 1, 0.36, 1) both; }
+.animate-ring { animation: ringFill 0.8s cubic-bezier(0.22, 1, 0.36, 1) both; }
 
 .delay-50 { animation-delay: 50ms; }
 .delay-100 { animation-delay: 100ms; }

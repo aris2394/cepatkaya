@@ -39,14 +39,16 @@ export const ExpenseChart = (props: { categories: CategoryStatus[] }) => {
     };
   };
 
-  const options = {
+  const isLight = () => typeof document !== 'undefined' && document.documentElement.classList.contains('light-mode');
+
+  const options = () => ({
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       legend: {
         position: 'bottom' as const,
         labels: {
-          color: 'rgba(255, 255, 255, 0.7)',
+          color: isLight() ? '#475569' : 'rgba(255, 255, 255, 0.7)',
           font: {
             size: 11,
             family: "'Inter', sans-serif"
@@ -84,7 +86,7 @@ export const ExpenseChart = (props: { categories: CategoryStatus[] }) => {
   return (
     <div class="h-64 w-full relative">
       {chartData() ? (
-        <Doughnut data={chartData() as any} options={options} />
+        <Doughnut data={chartData() as any} options={options() as any} />
       ) : (
         <div class="absolute inset-0 flex flex-col items-center justify-center">
           <div class="w-16 h-16 rounded-full bg-white/5 border-2 border-dashed border-white/10 flex items-center justify-center mb-3 text-white/20">
