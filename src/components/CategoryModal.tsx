@@ -29,7 +29,6 @@ export const CategoryModal = (props: CategoryModalProps) => {
   const [budget, setBudget] = createSignal('');
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal('');
-  const [error, setError] = createSignal('');
   const [success, setSuccess] = createSignal(false);
 
   createEffect(() => {
