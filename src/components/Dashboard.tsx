@@ -280,10 +280,10 @@ export const Dashboard = () => {
                     class="group p-4 rounded-2xl bg-white/3 border border-white/5 space-y-2.5 hover:bg-white/5 transition-all animate-fade-up"
                     style={`animation-delay:${0.2 + i() * 0.06}s; opacity:0`}
                   >
-                    <div class="flex items-center justify-between">
-                      <span class="font-bold text-white text-sm">{cat.name}</span>
-                      <div class="flex items-center gap-2">
-                        <span class={`text-xs font-bold ${cat.remaining < 0 ? 'text-rose-400' : 'text-white/50'}`}>
+                    <div class="flex items-center justify-between gap-2">
+                      <span class="font-bold text-white text-sm truncate flex-1">{cat.name}</span>
+                      <div class="flex items-center gap-2 shrink-0">
+                        <span class={`text-xs font-bold whitespace-nowrap ${cat.remaining < 0 ? 'text-rose-400' : 'text-white/50'}`}>
                           {cat.remaining < 0
                             ? `Exceeded ${formatIDR(Math.abs(cat.remaining))}`
                             : `${formatIDR(cat.remaining)} left`}
@@ -355,24 +355,24 @@ export const Dashboard = () => {
               <For each={data()?.recent_expenses}>
                 {(exp, i) => (
                   <div
-                    class={`py-3.5 flex items-center justify-between group animate-fade-up transition-opacity ${deletingId() === exp.id ? 'opacity-30' : ''}`}
+                    class={`py-3.5 flex items-center justify-between gap-2 group animate-fade-up transition-opacity ${deletingId() === exp.id ? 'opacity-30' : ''}`}
                     style={`animation-delay:${0.28 + i() * 0.04}s; opacity:0`}
                   >
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
                       {/* Category icon */}
                       <div class="w-9 h-9 rounded-xl bg-rose-500/10 border border-rose-500/15 flex items-center justify-center text-base flex-shrink-0">
                         💳
                       </div>
-                      <div>
-                        <div class="font-semibold text-white text-sm leading-none">{exp.category_name}</div>
+                      <div class="min-w-0 flex-1">
+                        <div class="font-semibold text-white text-sm leading-tight truncate">{exp.category_name}</div>
                         <div class="text-[11px] text-white/35 mt-1 flex items-center gap-1.5">
-                          <span>{exp.date}</span>
-                          {exp.note && <><span class="text-white/20">•</span><span class="truncate max-w-[100px]">{exp.note}</span></>}
+                          <span class="whitespace-nowrap">{exp.date}</span>
+                          {exp.note && <><span class="text-white/20 shrink-0">•</span><span class="truncate">{exp.note}</span></>}
                         </div>
                       </div>
                     </div>
-                    <div class="flex items-center gap-2">
-                      <span class="font-black text-sm text-rose-400">-{formatIDR(exp.amount)}</span>
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span class="font-black text-sm text-rose-400 whitespace-nowrap">-{formatIDR(exp.amount)}</span>
                       <div class="flex items-center opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity gap-1">
                         <button
                           onClick={() => { setEditingExpense(exp); setIsExpenseModalOpen(true); }}
