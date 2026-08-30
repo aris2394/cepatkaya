@@ -1,6 +1,10 @@
 ---
 import Layout from '../layouts/Layout.astro';
 import { Dashboard } from '../components/Dashboard';
+
+if (Astro.cookies.get('auth_token')?.value !== 'secure-admin-token-123qazaqw') {
+  return Astro.redirect('/login');
+}
 ---
 
 <Layout title="CepatKaya - Family Financial Monitor">

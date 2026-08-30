@@ -28,7 +28,10 @@ export const IncomeModal = (props: IncomeModalProps) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ month_year: props.currentMonth, total_amount: Number(amount()) }),
       });
-      if (!res.ok) throw new Error('Failed to update income');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to update income');
+      }
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);

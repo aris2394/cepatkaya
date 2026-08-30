@@ -37,7 +37,10 @@ export const ExpenseLogger = (props: ExpenseLoggerProps) => {
           note: note(),
         }),
       });
-      if (!res.ok) throw new Error('Failed to record expense');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to save expense');
+      }
 
       setSuccess(true);
       setTimeout(() => {

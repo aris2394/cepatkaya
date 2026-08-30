@@ -47,7 +47,10 @@ export const CategoryModal = (props: CategoryModalProps) => {
           month_year: props.currentMonth,
         }),
       });
-      if (!res.ok) throw new Error('Failed to save category');
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.error || 'Failed to save category');
+      }
       setSuccess(true);
       setTimeout(() => {
         setName('');

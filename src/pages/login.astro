@@ -1,0 +1,87 @@
+---
+import Layout from '../layouts/Layout.astro';
+
+let error = '';
+
+if (Astro.request.method === 'POST') {
+  try {
+    const data = await Astro.request.formData();
+    const username = data.get('username')?.toString();
+    const password = data.get('password')?.toString();
+    
+    if (username === 'admin' && password === '123qazaqw') {
+      // Set secure HTTP-only cookie
+      Astro.cookies.set('auth_token', 'secure-admin-token-123qazaqw', { 
+        path: '/', 
+        httpOnly: true,
+        secure: import.meta.env.PROD, // Secure in production (HTTPS)
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7 // 1 week
+      });
+      return Astro.redirect('/');
+    } else {
+      error = 'Username atau kata sandi salah!';
+    }
+  } catch (err) {
+    error = 'Terjadi kesalahan sistem';
+  }
+}
+---
+
+<Layout title="Login - CepatKaya">
+  <main class="min-h-screen bg-[#0A0C10] flex items-center justify-center p-4">
+    <div class="absolute inset-0 z-0 overflow-hidden pointer-events-none">
+      <div class="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/10 rounded-full blur-[120px]"></div>
+      <div class="absolute bottom-1/4 right-1/4 w-96 h-96 bg-indigo-500/10 rounded-full blur-[120px]"></div>
+    </div>
+    
+    <div class="relative z-10 w-full max-w-md bg-[#161921] border border-white/5 rounded-3xl p-8 shadow-2xl animate-fade-in">
+      <div class="text-center mb-8">
+        <div class="w-16 h-16 mx-auto bg-gradient-to-br from-emerald-400 to-teal-500 rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/20 mb-6">
+          <span class="text-3xl">🛡️</span>
+        </div>
+        <h1 class="text-2xl font-black text-white tracking-tight">Welcome Back</h1>
+        <p class="text-sm text-white/40 mt-2 font-medium">Log in to manage your finances</p>
+      </div>
+
+      {error && (
+        <div class="mb-6 p-4 rounded-2xl bg-rose-500/10 border border-rose-500/20 text-rose-400 text-sm font-bold text-center">
+          ⚠️ {error}
+        </div>
+      )}
+
+      <form method="POST" class="space-y-5">
+        <div>
+          <label for="username" class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Username</label>
+          <input 
+            type="text" 
+            id="username"
+            name="username" 
+            required 
+            placeholder="Enter username"
+            class="w-full px-5 py-3.5 bg-[#0A0C10] border border-white/5 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all placeholder:text-white/20"
+          />
+        </div>
+        
+        <div>
+          <label for="password" class="block text-[10px] font-bold text-white/40 uppercase tracking-widest mb-1.5 ml-1">Password</label>
+          <input 
+            type="password" 
+            id="password"
+            name="password" 
+            required 
+            placeholder="Enter password"
+            class="w-full px-5 py-3.5 bg-[#0A0C10] border border-white/5 rounded-2xl text-white font-semibold focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 transition-all placeholder:text-white/20"
+          />
+        </div>
+
+        <button 
+          type="submit" 
+          class="w-full mt-2 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 text-white font-black text-sm uppercase tracking-wide shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 hover:scale-[1.02] active:scale-[0.98] transition-all"
+        >
+          Secure Login
+        </button>
+      </form>
+    </div>
+  </main>
+</Layout>

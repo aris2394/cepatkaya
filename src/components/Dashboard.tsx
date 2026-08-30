@@ -5,6 +5,7 @@ import { BudgetGauge, formatIDR } from './ui/BudgetGauge';
 import { IncomeModal } from './IncomeModal';
 import { CategoryModal } from './CategoryModal';
 import { ExpenseLogger } from './ExpenseLogger';
+import { ExpenseChart } from './ExpenseChart';
 
 const SkeletonCard = () => (
   <div class="glass-card rounded-3xl p-5 space-y-3">
@@ -191,6 +192,28 @@ export const Dashboard = () => {
               >
                 Allocate →
               </button>
+            </div>
+          </Show>
+        </div>
+
+        {/* Analytics Card */}
+        <div class="glass-card rounded-3xl p-5 animate-fade-up card-lift" style="animation-delay:0.14s; opacity:0">
+          <div class="flex items-center justify-between mb-4">
+            <div>
+              <h2 class="text-sm font-bold text-white">Expense Analytics</h2>
+              <p class="text-[11px] text-white/35">Where your money goes</p>
+            </div>
+          </div>
+          
+          <Show when={loading()}>
+            <div class="flex items-center justify-center py-8 h-64">
+              <div class="shimmer w-48 h-48 rounded-full" />
+            </div>
+          </Show>
+          
+          <Show when={!loading() && data()}>
+            <div class="py-2">
+              <ExpenseChart categories={data()?.categories || []} />
             </div>
           </Show>
         </div>
